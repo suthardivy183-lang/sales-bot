@@ -9,7 +9,17 @@ small team of cooperating agents and deterministic tools with a real
 field it rests on and checked against that record *before* it is sent. A claim
 without evidence never goes out as stated.
 
+🌐 **Live demo:** **https://sales-bot-rust.vercel.app** — the browser chat
+simulator, running the real backend. Tap the prompts to walk the demo,
+including the trap question.
+
 📹 **Demo video:** _TODO — add public link before submission (see checklist below)._
+
+> **Note on the hosted demo:** Vercel is serverless, so session state lives in
+> ephemeral `/tmp` SQLite — fine for a single continuous demo, but it resets on
+> cold starts and isn't shared across instances. WhatsApp (Task 0B) and a
+> durable store (Postgres/Google Sheets) are the production path; the hosted
+> URL is a convenience demo, not production infrastructure.
 
 ## Why this isn't another LLM wrapper
 
