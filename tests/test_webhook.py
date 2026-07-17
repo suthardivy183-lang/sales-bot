@@ -1,6 +1,5 @@
 """Task 0A: a mocked WhatsApp payload posted locally must get a reply back."""
 
-from app.gateway.router import HARDCODED_REPLY
 from app.privacy import mask_phone
 from tests.conftest import TEST_VERIFY_TOKEN, make_status_payload, make_whatsapp_payload
 
@@ -13,7 +12,9 @@ class TestReceiveWebhook:
         body = response.json()
         assert body["status"] == "received"
         assert len(body["replies"]) == 1
-        assert body["replies"][0]["reply"] == HARDCODED_REPLY
+        # "I want a flat in Ahmedabad" sets the buy intent, so the
+        # orchestrated reply asks the next qualification question: budget.
+        assert "budget" in body["replies"][0]["reply"].lower()
 
     def test_reply_never_exposes_full_phone_number(self, client):
         wa_id = "919999000011"

@@ -52,7 +52,7 @@ pytest
 | 3 — Pricing/EMI Tool | ✅ Done |
 | 4 — Evidence-linked response + Verification Agent | ✅ Done |
 | 5 — Idempotent action tools (CRM + booking) | ✅ Done |
-| 6 — Orchestrator wired end to end | ⬜ Not started |
+| 6 — Orchestrator wired end to end | ✅ Done |
 | 7 — Hinglish handling | ⬜ Not started |
 | 8 — Evaluation suite | ⬜ Not started |
 | 9 — Docs + demo video | ⬜ Not started |
@@ -100,6 +100,13 @@ pytest
   double-booking). Two CRM backends behind one protocol: SQLite (local) and
   Google Sheets (live demo sheet, REST). CRM rows and bookings store masked
   phone numbers only, so the on-screen sheet in the demo can never leak PII.
+- **Orchestrator wired end to end**: each turn routes to booking, EMI,
+  property questions, or qualification based on intent and stage; the
+  verification gate runs before every reply that carries property facts. The
+  complete demo scenario — greeting → multi-turn qualification → verified
+  match → EMI → trap question refused → booking → CRM rows — runs as one
+  automated end-to-end test through the webhook, including a webhook replay
+  that changes nothing.
 
 **Designed for extension — documented only, deliberately not built for this demo:**
 

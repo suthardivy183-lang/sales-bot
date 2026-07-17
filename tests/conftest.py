@@ -7,12 +7,19 @@ from app.main import create_app
 TEST_VERIFY_TOKEN = "test-verify-token"
 
 
-@pytest.fixture
-def client() -> TestClient:
-    app = create_app()
-    app.dependency_overrides[get_settings] = lambda: Settings(
-        whatsapp_verify_token=TEST_VERIFY_TOKEN, _env_file=None
+def make_test_settings(tmp_path) -> Settings:
+    return Settings(
+        whatsapp_verify_token=TEST_VERIFY_TOKEN,
+        database_path=str(tmp_path / "app.db"),
+        _env_file=None,
     )
+
+
+@pytest.fixture
+def client(tmp_path) -> TestClient:
+    settings = make_test_settings(tmp_path)
+    app = create_app(settings)
+    app.dependency_overrides[get_settings] = lambda: settings
     return TestClient(app)
 
 
