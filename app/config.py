@@ -1,6 +1,15 @@
+import os
 from functools import lru_cache
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+def _default_database_path() -> str:
+    """On a serverless host (Vercel) only /tmp is writable, and it is
+    ephemeral — good enough for a demo session, not for durable state."""
+    if os.environ.get("VERCEL"):
+        return "/tmp/sessions.db"
+    return "sessions.db"
 
 
 class Settings(BaseSettings):
@@ -16,7 +25,7 @@ class Settings(BaseSettings):
     whatsapp_phone_number_id: str = ""
 
     # Session storage (Task 1)
-    database_path: str = "sessions.db"
+    database_path: str = _default_database_path()
 
     # LLM provider (Task 1+)
     llm_provider: str = "gemini"
