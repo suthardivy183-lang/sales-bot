@@ -15,9 +15,13 @@ class Settings(BaseSettings):
     whatsapp_access_token: str = ""
     whatsapp_phone_number_id: str = ""
 
+    # Session storage (Task 1)
+    database_path: str = "sessions.db"
+
     # LLM provider (Task 1+)
     llm_provider: str = "gemini"
     llm_api_key: str = ""
+    llm_model: str = "gemini-2.5-flash"
 
     # Google Sheets CRM (Task 5)
     google_sheets_credentials_file: str = ""

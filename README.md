@@ -47,7 +47,7 @@ pytest
 | --- | --- |
 | 0A — Local scaffold, mocked WhatsApp webhook + tests | ✅ Done |
 | 0B — Real WhatsApp transport | ⬜ Not started |
-| 1 — Conversation state + Qualification Agent | ⬜ Not started |
+| 1 — Conversation state + Qualification Agent | ✅ Done |
 | 2 — Property Search Tool (hybrid retrieval) | ⬜ Not started |
 | 3 — Pricing/EMI Tool | ⬜ Not started |
 | 4 — Evidence-linked response + Verification Agent | ⬜ Not started |
@@ -65,6 +65,14 @@ pytest
 - FastAPI webhook that validates WhatsApp Cloud API payloads (mocked for now),
   acknowledges status receipts, and returns a reply — with PII masking so full
   phone numbers never appear in logs or responses.
+- Multi-turn conversation state in SQLite, keyed by WhatsApp number — every
+  turn merges into one running picture of the lead; nothing is treated as an
+  isolated request.
+- Qualification Agent with **rules-first hybrid extraction**: Indian budget
+  formats (`70 lakh`, `1.2 cr`, `60–80 lakh`, `₹65,00,000`), BHK, locality,
+  intent, and timeline are parsed deterministically; an optional Gemini pass
+  fills only the fields rules couldn't parse and can never override them.
+  Provider failures degrade gracefully to rules-only extraction.
 
 **Designed for extension — documented only, deliberately not built for this demo:**
 
