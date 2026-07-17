@@ -1,127 +1,185 @@
-# Sales Copilot — WhatsApp Agentic Sales System
+# Sales Copilot — a WhatsApp sales system that can't confidently lie
 
-Entry for **FlowZint AI Hackathon 2026, Sales Bot track**. An agentic sales system
-for WhatsApp — a small team of cooperating agents and deterministic tools with a
-real verification step — demoed against one vertical done well: **residential real
-estate in Ahmedabad**.
+**FlowZint AI Hackathon 2026 · Sales Bot track**
 
-The differentiator is the **Verification Agent**: every factual property claim in a
-draft reply is tagged with a property ID and source field, then checked
-deterministically against the property record before anything is sent. A claim
+An agentic sales system for WhatsApp, demoed against one vertical done well:
+**residential real estate in Ahmedabad**. Not a prompt wired to WhatsApp — a
+small team of cooperating agents and deterministic tools with a real
+**verification step**: every factual property claim is tagged with the record
+field it rests on and checked against that record *before* it is sent. A claim
 without evidence never goes out as stated.
+
+📹 **Demo video:** _TODO — add public link before submission (see checklist below)._
+
+## Why this isn't another LLM wrapper
+
+Production data across funded support/sales AI platforms shows complex queries
+resolving only ~15–30% of the time — mostly because nothing catches the model
+when it is *confidently wrong*. The market values the problem (Salesforce
+signed a definitive agreement in June 2026 to acquire Fin for ~$3.6B); this
+project is a working proof of the missing piece, not a from-scratch competitor
+to Interakt/Haptik.
+
+The centerpiece: the Response Generator must emit every factual statement as a
+structured claim —
+
+```json
+{"statement": "3BHK", "property_id": 2, "evidence_field": "bhk", "claimed_value": 3}
+```
+
+— and the **Verification Agent** checks each claim deterministically against
+the property record. Three verdicts:
+
+| Verdict | What happens |
+| --- | --- |
+| SUPPORTED | The statement ships as written. |
+| CONTRADICTED | Rewritten **from the record** ("Correction: the listed price is ₹95 lakh."). |
+| UNSUPPORTED | Refused outright + flagged for human follow-up. Never confirmed. |
+
+EMI figures are re-computed from their own inputs — an invented or tampered
+number is corrected deterministically. No LLM judges whether another LLM
+hallucinated a structured fact.
 
 ## Architecture
 
-```text
-Customer (WhatsApp)
-  -> Gateway (WhatsApp Cloud API)
-    -> Conversation State (SQLite, keyed by WhatsApp number)
-    -> Orchestrator Agent (plans and routes each turn using current state)
-       -> Qualification Agent   (extracts intent, budget, locality, BHK, timeline)
-       -> Property Search Tool  (deterministic filters; semantic rerank for fuzzy prefs only)
-       -> Pricing / EMI Tool    (deterministic calculator, not LLM math)
-       -> Response Generator    (draft reply + structured claims list)
-       -> Verification Agent    (checks every claim against the source record)
-    -> Action Tools (idempotent CRM row + viewing slot booking, via Google Sheets)
-    -> back to WhatsApp
+```mermaid
+flowchart TD
+    C[Customer on WhatsApp] --> G[Gateway<br/>WhatsApp Cloud API webhook]
+    G --> O{Orchestrator Agent<br/>routes each turn by intent + stage}
+    O <--> S[(Conversation State<br/>SQLite, keyed by WhatsApp number)]
+    O --> Q[Qualification Agent<br/>rules-first extraction, optional LLM gap-fill]
+    O --> PS[Property Search Tool<br/>hard filters first, rerank only reorders]
+    O --> E[Pricing/EMI Tool<br/>pure amortization math]
+    O --> RG[Response Generator<br/>draft reply + structured claims]
+    RG --> V{{Verification Agent<br/>deterministic evidence check}}
+    V -->|approved / corrected / refused| G
+    O --> A[Action Tools<br/>idempotent CRM row + slot booking]
+    A --> CRM[(CRM<br/>Google Sheets / SQLite)]
 ```
 
-## Setup
+Design rules the code actually enforces (each has tests):
 
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env   # fill in your own values; never commit .env
+1. **State first** — every turn merges into one running lead picture keyed by
+   WhatsApp number; nothing is treated as an isolated request.
+2. **Deterministic before semantic** — hard filters (BHK, locality, price,
+   possession) run first; the preference reranker may only *reorder* already
+   filtered candidates, never add or drop one.
+3. **Tools, not agents, do arithmetic and side effects** — EMI, CRM writes,
+   and bookings are pure/idempotent functions. LLMs never do money math.
+4. **Idempotency by message ID** — a replayed webhook returns the original
+   result; duplicate CRM rows and double-bookings are structurally impossible.
+5. **PII masking everywhere** — logs, API responses, CRM rows, and bookings
+   carry masked numbers (`********0011`) only.
 
-# Run the API
-uvicorn app.main:app --reload
+## The trap question, end to end
 
-# Run the tests
-pytest
-```
+The five demo fixtures deliberately have **no `private_pool` field**. Live
+demo moment:
 
-## Build progress
+> **Customer:** Does the Shela property have a private pool?
+>
+> **Draft (internal, assertive on purpose):** "Yes — it has a private pool."
+> with claim `{"property_id": 2, "evidence_field": "private_pool", "claimed_value": true}`
+>
+> **Verification Agent:** no such evidence field on property #2 → UNSUPPORTED
+>
+> **Sent to customer:** "I can't confirm a private pool from the verified
+> listing data, so I won't state it as fact. I've flagged this for a human
+> agent to confirm with the builder."
+>
+> **Side effect:** a `HANDOFF` row lands in the CRM.
 
-| Task | Status |
-| --- | --- |
-| 0A — Local scaffold, mocked WhatsApp webhook + tests | ✅ Done |
-| 0B — Real WhatsApp transport | ⬜ Not started |
-| 1 — Conversation state + Qualification Agent | ✅ Done |
-| 2 — Property Search Tool (hybrid retrieval) | ✅ Done |
-| 3 — Pricing/EMI Tool | ✅ Done |
-| 4 — Evidence-linked response + Verification Agent | ✅ Done |
-| 5 — Idempotent action tools (CRM + booking) | ✅ Done |
-| 6 — Orchestrator wired end to end | ✅ Done |
-| 7 — Hinglish handling | ✅ Done |
-| 8 — Evaluation suite | ✅ Done |
-| 9 — Docs + demo video | ⬜ Not started |
-| 10 — Small-model routing (optional) | ⬜ Not started |
+An eval case asserts no property in the dataset can ever get a pool claim
+through, and the full scenario (including this moment) runs as one automated
+end-to-end test.
 
 ## Implemented vs. designed for extension
 
-**Implemented (working, tested):**
+### Implemented — working, tested (177 tests, `pytest`)
 
-- FastAPI webhook that validates WhatsApp Cloud API payloads (mocked for now),
-  acknowledges status receipts, and returns a reply — with PII masking so full
-  phone numbers never appear in logs or responses.
-- Multi-turn conversation state in SQLite, keyed by WhatsApp number — every
-  turn merges into one running picture of the lead; nothing is treated as an
-  isolated request.
-- Qualification Agent with **rules-first hybrid extraction**: Indian budget
-  formats (`70 lakh`, `1.2 cr`, `60–80 lakh`, `₹65,00,000`), BHK, locality,
-  intent, and timeline are parsed deterministically; an optional Gemini pass
-  fills only the fields rules couldn't parse and can never override them.
-  Provider failures degrade gracefully to rules-only extraction.
-- Property Search Tool with **hybrid retrieval**: deterministic hard filters
-  (BHK, locality, price ceiling, possession status) over the five Ahmedabad
-  fixtures run first; a preference reranker ("ready soon", "family-friendly",
-  "sasta") may only reorder the filtered candidates — it can never add a
-  property back or drop one. Reranking is keyword-heuristic for the demo; an
-  embedding reranker slots in behind the same signature (see roadmap).
-- Pricing/EMI Tool: pure reducing-balance amortization (`EMI = P·r·(1+r)^n /
-  ((1+r)^n − 1)`) verified against hand-calculated values — no LLM ever does
-  financial arithmetic. Default assumptions (8.5% p.a., 20 years, 20% down)
-  are part of the quote object so replies must state them.
-- **Evidence-linked generation + deterministic verification** (the core of
-  this entry): every factual statement in a draft reply carries a structured
-  claim `{property_id, evidence_field, claimed_value}`. The Verification Agent
-  checks each claim against the property record before anything is sent —
-  supported claims ship, contradicted claims are rewritten with the record's
-  actual value, unsupported claims (like the private-pool trap question) are
-  refused outright and escalated to a human. EMI numbers are re-computed from
-  their own inputs, so a tampered or invented figure is corrected
-  deterministically. LLM-judged soft claims ("great for families") are a
-  designed extension, deliberately not built.
-- **Idempotent action tools**: CRM lead writes and viewing-slot bookings are
-  keyed by WhatsApp message ID through an action ledger — a replayed webhook
-  event returns the original result instead of re-executing, so duplicates are
-  structurally impossible (a PRIMARY KEY on the slot also rules out
-  double-booking). Two CRM backends behind one protocol: SQLite (local) and
-  Google Sheets (live demo sheet, REST). CRM rows and bookings store masked
-  phone numbers only, so the on-screen sheet in the demo can never leak PII.
-- **Orchestrator wired end to end**: each turn routes to booking, EMI,
-  property questions, or qualification based on intent and stage; the
-  verification gate runs before every reply that carries property facts. The
-  complete demo scenario — greeting → multi-turn qualification → verified
-  match → EMI → trap question refused → booking → CRM rows — runs as one
-  automated end-to-end test through the webhook, including a webhook replay
-  that changes nothing.
-- **Hinglish handling**: code-switch detection (romanized markers +
-  Devanagari script) plus native rule coverage for common Hinglish phrasings —
-  "70 lakh tak", "80 lakh ke andar", "1 cr se kam", "50 lakh se upar",
-  "3 kamre", "ghar lena hai", "turant", "2 mahine mein" — verified by a full
-  Hinglish conversation running end to end to a verified match. Devanagari
-  *extraction* relies on the LLM pass (rules cover romanized input), which is
-  a documented limitation without an API key, never silently wrong output.
+- FastAPI webhook validating WhatsApp Cloud API payloads (mock-driven locally),
+  with Meta's GET verification handshake and status-receipt handling.
+- Multi-turn conversation state in SQLite keyed by WhatsApp number.
+- Qualification Agent: deterministic parsing of Indian budget formats
+  (`70 lakh`, `1.2 cr`, `60–80 lakh`, `₹65,00,000`), BHK, locality, intent,
+  timeline — plus an optional Gemini pass that can only fill gaps, never
+  override rules, and degrades to rules-only on any provider failure.
+- Hybrid property search: hard filters → explainable keyword rerank.
+- Deterministic EMI tool verified against hand-calculated values.
+- Evidence-linked Response Generator + deterministic Verification Agent
+  (the trap question is refused; wrong prices are corrected from the record).
+- Idempotent CRM + booking tools behind an action ledger; SQLite and Google
+  Sheets CRM backends behind one protocol.
+- Orchestrator wiring the full flow; the complete Ahmedabad demo scenario runs
+  as one automated test, including a webhook replay that changes nothing.
+- Hinglish: code-switch detection + native rule coverage ("70 lakh tak",
+  "3 kamre", "ghar lena hai", "turant"), proven by a full Hinglish
+  conversation reaching a verified match.
+- 58-case table-driven evaluation suite with pass-rate reporting and CI gates.
 
-**Designed for extension — documented only, deliberately not built for this demo:**
+### Pending credentials (code ready, not yet wired live)
+
+- **Task 0B — real WhatsApp transport**: needs a Meta Cloud API test number
+  (or Twilio Sandbox). The webhook contract is already provider-shaped.
+- **Google Sheets as the live CRM backend**: needs a service-account JSON +
+  spreadsheet ID; the backend is implemented and mock-tested.
+- **Gemini LLM pass**: needs `LLM_API_KEY`; everything runs rules-only today.
+
+### Designed for extension — documented only, deliberately NOT built
 
 - Invoice generation
 - Feedback collection
 - Referral tracking
 - Renewal / upsell logic
 - Standalone analytics dashboard
+- LLM judgment pass for free-text soft claims ("great for families")
+- Embedding-based semantic reranker (slots in behind the same search signature)
+- Devanagari-script extraction (detection works; extraction needs the LLM key)
+- Small-model cost routing (Task 10, optional)
+
+## Getting started
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env        # fill in your own values; never commit .env
+
+pytest                      # 177 tests
+python -m evals.run_evals   # evaluation table below
+uvicorn app.main:app --reload
+```
+
+Simulate a customer message locally (no WhatsApp account needed):
+
+```bash
+curl -s -X POST localhost:8000/webhook -H 'Content-Type: application/json' -d '{
+  "object": "whatsapp_business_account",
+  "entry": [{"id": "E", "changes": [{"field": "messages", "value": {
+    "messaging_product": "whatsapp",
+    "messages": [{"from": "915550000011", "id": "wamid.DEMO1",
+                  "timestamp": "0", "type": "text",
+                  "text": {"body": "2BHK in Bopal under 70 lakh, buying"}}]}}]}]
+}'
+```
+
+### Wiring real WhatsApp (Task 0B)
+
+1. Create an app at developers.facebook.com → add the WhatsApp product → API
+   Setup gives a free test number, temporary access token, and phone number ID.
+2. Put `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, and a random
+   `WHATSAPP_VERIFY_TOKEN` in `.env`.
+3. Expose the server (e.g. an HTTPS tunnel), set the webhook URL in Meta's
+   console with that verify token — the GET handshake endpoint already works.
+
+### Wiring the Google Sheets CRM
+
+1. Create a Google Cloud service account with the Sheets API enabled; download
+   its JSON key **outside the repo**.
+2. Share the target spreadsheet with the service-account email.
+3. Set `GOOGLE_SHEETS_CREDENTIALS_FILE` and `GOOGLE_SHEETS_SPREADSHEET_ID` in
+   `.env`; swap `SheetsCrmBackend` in at the composition root
+   ([app/deps.py](app/deps.py)).
 
 ## Evaluation results
 
@@ -154,6 +212,64 @@ no mocks. The same targets are enforced as a CI gate in
 | handoff | 3 | 3 | 100.0% | ≥100% | ✅ |
 | **Overall** | **56** | **58** | **96.6%** | — | — |
 
-## Demo video
+## Build progress
 
-Link will be added at Task 9. No phone numbers or tokens are visible in it.
+| Task | Status |
+| --- | --- |
+| 0A — Local scaffold, mocked WhatsApp webhook + tests | ✅ Done |
+| 0B — Real WhatsApp transport | 🔑 Pending credentials |
+| 1 — Conversation state + Qualification Agent | ✅ Done |
+| 2 — Property Search Tool (hybrid retrieval) | ✅ Done |
+| 3 — Pricing/EMI Tool | ✅ Done |
+| 4 — Evidence-linked response + Verification Agent | ✅ Done |
+| 5 — Idempotent action tools (CRM + booking) | ✅ Done |
+| 6 — Orchestrator wired end to end | ✅ Done |
+| 7 — Hinglish handling | ✅ Done |
+| 8 — Evaluation suite | ✅ Done |
+| 9 — Docs + demo script | ✅ Done (video pending) |
+| 10 — Small-model routing (optional) | ⬜ Skipped unless time permits |
+
+## Demo
+
+The full 2–3 minute run sheet — message by message, with expected replies and
+what to show on screen — is in **[DEMO.md](DEMO.md)**. The trap-question
+moment is the centerpiece.
+
+**Submission checklist**
+
+- [ ] Repo is public (verify explicitly, don't assume)
+- [ ] Demo video is public, 2–3 minutes, includes the trap-question moment
+- [ ] No phone numbers or tokens visible in the video or screenshots
+- [ ] Demo video link added at the top of this README
+
+## Privacy & security
+
+- Phone numbers are masked (`********0011`) in logs, API responses, CRM rows,
+  and bookings; all numbers in tests/fixtures are synthetic.
+- Secrets live in `.env` (gitignored from the first commit); the Gemini key
+  travels in a request header, never in a URL.
+- An automated test scans tracked files for token-shaped strings and asserts
+  no `.env`/credentials file is ever committed.
+
+## Project layout
+
+```text
+app/
+├── main.py            # FastAPI app factory
+├── config.py          # pydantic-settings (.env)
+├── orchestrator.py    # routes each turn; verification gates every reply
+├── deps.py            # composition root
+├── privacy.py         # PII masking
+├── inr.py             # ₹ formatting
+├── gateway/           # webhook endpoints + payload schemas
+├── state/             # SessionState + SQLite store
+├── nlu/               # rules extractor, Hinglish, questions, intents, LLM hybrid
+├── llm/               # provider protocol + Gemini implementation
+├── agents/            # qualification, response generator, verification, claims
+├── properties/        # Property model + JSON repository
+├── tools/             # property search, EMI
+└── actions/           # idempotent CRM + booking + action ledger
+data/properties.json   # the five demo fixtures (no private_pool — deliberate)
+evals/                 # table-driven eval cases + runner
+tests/                 # 177 tests incl. full end-to-end demo scenario
+```
