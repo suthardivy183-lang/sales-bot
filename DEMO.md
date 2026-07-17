@@ -4,11 +4,23 @@ The exact live sequence, verified continuously by the automated end-to-end
 test (`tests/test_orchestrator.py::TestFullAhmedabadScenario`). If the test is
 green, this script works.
 
+## Two ways to run the demo
+
+- **WhatsApp (real channel):** needs Task 0B credentials wired; record the
+  WhatsApp chat with the number masked.
+- **Browser chat simulator (no credentials needed):** run `uvicorn app.main:app`
+  and open `http://localhost:8000/`. It posts to the same `/webhook`, so the
+  orchestrator, verification, and CRM are identical. The quick-prompt chips
+  follow this exact script; the trap chip is highlighted. Use this if Task 0B
+  isn't wired yet — just show the "Local simulator" label on screen so it's
+  clearly not passed off as live WhatsApp.
+
 ## Pre-flight checklist
 
-- [ ] Fresh database: delete `sessions.db` so the lead starts from scratch
-- [ ] Server running and reachable from the WhatsApp webhook (Task 0B), or
-      the local curl driver ready (README "Getting started")
+- [ ] Fresh session: click **↻ New conversation** (simulator) or delete
+      `sessions.db` so the lead starts from scratch
+- [ ] Server running; WhatsApp webhook reachable (Task 0B) **or** the browser
+      simulator open at `/`
 - [ ] CRM sheet visible on screen, empty
 - [ ] **Masking check**: phone number hidden in the WhatsApp client UI or
       blurred in post; no `.env`, tokens, or API consoles on screen

@@ -76,6 +76,11 @@ class TestDemoScript:
         assert "No real phone numbers" in DEMO
         assert "mask" in DEMO.lower()
 
+    def test_simulator_is_documented_as_not_production(self):
+        assert "chat simulator" in README.lower()
+        assert "production channel" in README.lower()
+        assert "simulator" in DEMO.lower()
+
 
 class TestNoSecretsInRepo:
     def test_no_env_or_credential_files_tracked(self):

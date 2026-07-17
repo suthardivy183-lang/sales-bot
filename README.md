@@ -157,6 +157,12 @@ end-to-end test.
 - Embedding-based semantic reranker (slots in behind the same search signature)
 - Devanagari-script extraction (detection works; extraction needs the LLM key)
 
+Dev/demo tooling (not the product, clearly labeled):
+
+- Browser **chat simulator** at `/` — a front door onto `/webhook` for
+  demoing and development while real WhatsApp (Task 0B) is pending. WhatsApp
+  remains the real channel; the simulator changes no backend behaviour.
+
 ## Getting started
 
 ```bash
@@ -170,7 +176,13 @@ python -m evals.run_evals   # evaluation table below
 uvicorn app.main:app --reload
 ```
 
-Simulate a customer message locally (no WhatsApp account needed):
+Then open **http://localhost:8000/** for the browser **chat simulator** — a
+dev/demo front door that posts to the same `/webhook` as WhatsApp (orchestrator,
+verification, and CRM untouched). It's the fastest way to walk the full demo,
+including the trap question, without WhatsApp credentials. It is **not** the
+production channel — WhatsApp (Task 0B) is the real transport.
+
+Or simulate a customer message from the shell (no WhatsApp account needed):
 
 ```bash
 curl -s -X POST localhost:8000/webhook -H 'Content-Type: application/json' -d '{
@@ -276,7 +288,8 @@ moment is the centerpiece.
 
 ```text
 app/
-├── main.py            # FastAPI app factory
+├── main.py            # FastAPI app factory (+ serves the chat simulator at /)
+├── static/            # simulator.html — browser chat simulator (dev/demo)
 ├── config.py          # pydantic-settings (.env)
 ├── orchestrator.py    # routes each turn; verification gates every reply
 ├── deps.py            # composition root
