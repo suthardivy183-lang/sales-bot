@@ -32,4 +32,5 @@ def test_the_suite_actually_ran_everything():
         "ambiguous",
         "booking_duplication",
         "handoff",
+        "routing",
     }

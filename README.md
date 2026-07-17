@@ -71,6 +71,23 @@ Design rules the code actually enforces (each has tests):
 5. **PII masking everywhere** — logs, API responses, CRM rows, and bookings
    carry masked numbers (`********0011`) only.
 
+## Small-model cost routing (opt-in)
+
+Set `LLM_ROUTING_ENABLED=true` (with a key present) and each turn is routed by
+deterministic signals — the choice is logged every turn:
+
+| Tier | When | Cost |
+| --- | --- | --- |
+| `rules_only` | rules fully parsed a short, unambiguous message | **no LLM call** |
+| `small` | short message with a parse gap | cheap model (`gemini-2.5-flash-lite`) |
+| `large` | negotiation/ambiguity, long, or code-switched with no rule coverage | strong model (`gemini-2.5-flash`) |
+
+Because the deterministic rules already resolve the common qualification turns
+(budget, BHK, locality), most of a normal conversation routes to `rules_only`
+— the router's biggest saving is *not calling a model at all*. It is off by
+default so the graded path is unchanged, and the policy is pure (text + rule
+fields → tier), so it is fully tested without any API key.
+
 ## The trap question, end to end
 
 The five demo fixtures deliberately have **no `private_pool` field**. Live
@@ -115,7 +132,11 @@ end-to-end test.
 - Hinglish: code-switch detection + native rule coverage ("70 lakh tak",
   "3 kamre", "ghar lena hai", "turant"), proven by a full Hinglish
   conversation reaching a verified match.
-- 58-case table-driven evaluation suite with pass-rate reporting and CI gates.
+- 64-case table-driven evaluation suite with pass-rate reporting and CI gates.
+- **Small-model cost routing** (opt-in): a three-tier router picks per turn
+  between rules-only (no LLM call — the common case here), a cheap model for
+  short parse gaps, and a stronger model for ambiguous/negotiation-heavy or
+  long turns. The decision is deterministic and logged every turn.
 
 ### Pending credentials (code ready, not yet wired live)
 
@@ -135,7 +156,6 @@ end-to-end test.
 - LLM judgment pass for free-text soft claims ("great for families")
 - Embedding-based semantic reranker (slots in behind the same search signature)
 - Devanagari-script extraction (detection works; extraction needs the LLM key)
-- Small-model cost routing (Task 10, optional)
 
 ## Getting started
 
@@ -210,7 +230,8 @@ no mocks. The same targets are enforced as a CI gate in
 | ambiguous | 4 | 4 | 100.0% | ≥100% | ✅ |
 | booking_duplication | 2 | 2 | 100.0% | ≥100% | ✅ |
 | handoff | 3 | 3 | 100.0% | ≥100% | ✅ |
-| **Overall** | **56** | **58** | **96.6%** | — | — |
+| routing | 6 | 6 | 100.0% | ≥100% | ✅ |
+| **Overall** | **56** | **64** | **96.9%** | — | — |
 
 ## Build progress
 
@@ -227,7 +248,7 @@ no mocks. The same targets are enforced as a CI gate in
 | 7 — Hinglish handling | ✅ Done |
 | 8 — Evaluation suite | ✅ Done |
 | 9 — Docs + demo script | ✅ Done (video pending) |
-| 10 — Small-model routing (optional) | ⬜ Skipped unless time permits |
+| 10 — Small-model routing (optional) | ✅ Done (opt-in) |
 
 ## Demo
 

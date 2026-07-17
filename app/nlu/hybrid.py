@@ -3,6 +3,8 @@
 from app.config import Settings
 from app.llm.gemini import GeminiProvider
 from app.nlu.llm_extractor import LLMExtractor
+from app.nlu.routed_extractor import RoutedLLMExtractor
+from app.nlu.routing import ModelRouter, RouteTier
 from app.nlu.rules import extract_fields
 from app.nlu.schemas import ExtractedFields, merge_preferring
 from app.state.models import SessionState
@@ -25,9 +27,29 @@ class HybridExtractor:
 
 
 def build_extractor(settings: Settings) -> HybridExtractor:
-    if settings.llm_api_key:
-        provider = GeminiProvider(
-            api_key=settings.llm_api_key, model=settings.llm_model
+    if not settings.llm_api_key:
+        return HybridExtractor()  # rules-only; no key configured
+
+    if settings.llm_routing_enabled:
+        return HybridExtractor(_build_routed_extractor(settings))
+
+    provider = GeminiProvider(api_key=settings.llm_api_key, model=settings.llm_model)
+    return HybridExtractor(LLMExtractor(provider))
+
+
+def _build_routed_extractor(settings: Settings) -> RoutedLLMExtractor:
+    def extractor_for(model: str) -> LLMExtractor:
+        return LLMExtractor(
+            GeminiProvider(api_key=settings.llm_api_key, model=model)
         )
-        return HybridExtractor(LLMExtractor(provider))
-    return HybridExtractor()
+
+    return RoutedLLMExtractor(
+        router=ModelRouter(
+            small_model=settings.llm_model_small,
+            large_model=settings.llm_model_large,
+        ),
+        extractors_by_tier={
+            RouteTier.SMALL: extractor_for(settings.llm_model_small),
+            RouteTier.LARGE: extractor_for(settings.llm_model_large),
+        },
+    )

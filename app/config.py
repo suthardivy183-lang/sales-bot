@@ -23,6 +23,11 @@ class Settings(BaseSettings):
     llm_api_key: str = ""
     llm_model: str = "gemini-2.5-flash"
 
+    # Small-model cost routing (Task 10, optional; off by default)
+    llm_routing_enabled: bool = False
+    llm_model_small: str = "gemini-2.5-flash-lite"
+    llm_model_large: str = "gemini-2.5-flash"
+
     # Google Sheets CRM (Task 5)
     google_sheets_credentials_file: str = ""
     google_sheets_spreadsheet_id: str = ""

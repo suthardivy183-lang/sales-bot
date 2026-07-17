@@ -24,6 +24,7 @@ from app.deps import build_orchestrator
 from app.gateway.schemas import IncomingMessage
 from app.nlu.hybrid import HybridExtractor
 from app.nlu.questions import fields_asked_about
+from app.nlu.routing import ModelRouter
 from app.nlu.rules import extract_fields
 from app.properties.repository import PropertyRepository
 from app.state.models import SessionState
@@ -45,6 +46,7 @@ TARGETS = {
     "ambiguous": 100.0,
     "booking_duplication": 100.0,
     "handoff": 100.0,
+    "routing": 100.0,
 }
 
 _PROFILE_FIELDS = ("intent", "locality", "budget_min", "budget_max", "bhk", "timeline")
@@ -239,8 +241,19 @@ def _eval_handoff(case: dict) -> EvalResult:
     return EvalResult(case["category"], case["name"], passed, detail)
 
 
+_ROUTER = ModelRouter(small_model="small", large_model="large")
+
+
+def _eval_routing(case: dict) -> EvalResult:
+    got = _ROUTER.decide(case["message"]).tier.value
+    passed = got == case["expected_tier"]
+    detail = "" if passed else f"expected {case['expected_tier']}, got {got}"
+    return EvalResult(case["category"], case["name"], passed, detail)
+
+
 _EXECUTORS = {
     "qualification": _eval_extraction,
+    "routing": _eval_routing,
     "hinglish": _eval_extraction,
     "state_merging": _eval_state_merging,
     "retrieval": _eval_retrieval,

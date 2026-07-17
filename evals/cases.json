@@ -66,5 +66,12 @@
 
   {"category": "handoff", "name": "trap question escalates to human", "setup": ["buying a flat, 3BHK in Bopal, under 90 lakh"], "question": "Does the Shela property have a private pool?", "expect_reply_contains": "can't confirm", "expect_note_prefix": "HANDOFF"},
   {"category": "handoff", "name": "gym question escalates to human", "setup": ["buying a flat, 3BHK in Bopal, under 90 lakh"], "question": "Is there a gym?", "expect_reply_contains": "can't confirm", "expect_note_prefix": "HANDOFF"},
-  {"category": "handoff", "name": "no slots left hands off", "setup": ["buying a flat, 3BHK in Bopal, under 90 lakh"], "question": "book a viewing", "pre_book_all": true, "expect_reply_contains": "human agent", "expect_note_prefix": "booking failed"}
+  {"category": "handoff", "name": "no slots left hands off", "setup": ["buying a flat, 3BHK in Bopal, under 90 lakh"], "question": "book a viewing", "pre_book_all": true, "expect_reply_contains": "human agent", "expect_note_prefix": "booking failed"},
+
+  {"category": "routing", "name": "parsed short turn is free (no model)", "message": "3BHK in Bopal", "expected_tier": "rules_only"},
+  {"category": "routing", "name": "budget ceiling turn is free", "message": "under 80 lakh", "expected_tier": "rules_only"},
+  {"category": "routing", "name": "negotiation escalates to large", "message": "I like it but can you do a discount?", "expected_tier": "large"},
+  {"category": "routing", "name": "ambiguous escalates to large", "message": "not sure which one is better", "expected_tier": "large"},
+  {"category": "routing", "name": "short parse-gap uses small", "message": "something nice please", "expected_tier": "small"},
+  {"category": "routing", "name": "devanagari no-coverage escalates", "message": "मुझे कुछ अच्छा चाहिए", "expected_tier": "large"}
 ]
