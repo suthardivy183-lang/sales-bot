@@ -20,6 +20,7 @@ from app.agents.qualification import QualificationAgent, next_question
 from app.agents.response import ResponseGenerator
 from app.agents.verification import VerificationAgent
 from app.gateway.schemas import IncomingMessage
+from app.nlu.hinglish import is_code_switched
 from app.nlu.intents import wants_booking, wants_emi
 from app.nlu.questions import fields_asked_about
 from app.nlu.rules import extract_locality
@@ -73,7 +74,10 @@ class Orchestrator:
         state = self._store.get_or_create(message.wa_id)
         target = self._target_property(state, message.text)
         logger.info(
-            "Turn from %s (stage=%s)", mask_phone(message.wa_id), state.stage
+            "Turn from %s (stage=%s, code_switched=%s)",
+            mask_phone(message.wa_id),
+            state.stage,
+            is_code_switched(message.text),
         )
 
         if wants_booking(message.text) and target is not None:

@@ -48,11 +48,16 @@ _CEILING_RE = re.compile(
     rf"\s+(?:rs\.?\s*)?({_NUM})\s*({_UNIT})\b",
     re.IGNORECASE,
 )
-_CEILING_HINGLISH_RE = re.compile(rf"({_NUM})\s*({_UNIT})\s*tak\b", re.IGNORECASE)
+_CEILING_HINGLISH_RE = re.compile(
+    rf"({_NUM})\s*({_UNIT})\s*(?:tak|ke\s+andar|se\s+kam|se\s+neeche|ke\s+aas\s*paas)\b",
+    re.IGNORECASE,
+)
 _BARE_AMOUNT_RE = re.compile(rf"({_NUM})\s*({_UNIT})\b", re.IGNORECASE)
 _PLAIN_RUPEES_RE = re.compile(r"\b(\d{6,})\b")
 
-_BHK_DIGIT_RE = re.compile(r"\b(\d)\s*-?\s*(?:bhk|bed(?:room)?s?)\b", re.IGNORECASE)
+_BHK_DIGIT_RE = re.compile(
+    r"\b(\d)\s*-?\s*(?:bhk|bed(?:room)?s?|kamr(?:a|e|on?))\b", re.IGNORECASE
+)
 _WORD_NUMBERS = {"one": 1, "two": 2, "three": 3, "four": 4, "five": 5}
 _BHK_WORD_RE = re.compile(
     rf"\b({'|'.join(_WORD_NUMBERS)})\s*-?\s*(?:bhk|bed(?:room)?s?)\b", re.IGNORECASE
@@ -70,16 +75,18 @@ LOCALITY_ALIASES = {
 
 _RENT_RE = re.compile(r"\b(?:rent(?:al)?|lease|kiraya|kiraye)\b", re.IGNORECASE)
 _BUY_RE = re.compile(
-    r"\b(?:buy(?:ing)?|purchase|flat|apartment|house|home|property|invest(?:ment)?|chahiye)\b",
+    r"\b(?:buy(?:ing)?|purchase|flat|apartment|house|home|property|invest(?:ment)?"
+    r"|chahiye|ghar|makaan|lena|khareed(?:na)?)\b",
     re.IGNORECASE,
 )
 
 _IMMEDIATE_RE = re.compile(
-    r"\b(?:immediate(?:ly)?|asap|urgent(?:ly)?|right\s+away|jaldi|ready\s+to\s+move)\b",
+    r"\b(?:immediate(?:ly)?|asap|urgent(?:ly)?|right\s+away|jaldi|turant|abhi"
+    r"|ready\s+to\s+move)\b",
     re.IGNORECASE,
 )
-_MONTHS_RE = re.compile(r"\b(\d+)\s*months?\b", re.IGNORECASE)
-_NEXT_MONTH_RE = re.compile(r"\bnext\s+month\b", re.IGNORECASE)
+_MONTHS_RE = re.compile(r"\b(\d+)\s*(?:months?|mahin[ae]|mahino)\b", re.IGNORECASE)
+_NEXT_MONTH_RE = re.compile(r"\b(?:next\s+month|agle\s+mahine)\b", re.IGNORECASE)
 _YEARISH_RE = re.compile(r"\b(?:next\s+year|1\s*year|a\s+year)\b", re.IGNORECASE)
 
 

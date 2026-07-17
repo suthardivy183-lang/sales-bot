@@ -53,7 +53,7 @@ pytest
 | 4 — Evidence-linked response + Verification Agent | ✅ Done |
 | 5 — Idempotent action tools (CRM + booking) | ✅ Done |
 | 6 — Orchestrator wired end to end | ✅ Done |
-| 7 — Hinglish handling | ⬜ Not started |
+| 7 — Hinglish handling | ✅ Done |
 | 8 — Evaluation suite | ⬜ Not started |
 | 9 — Docs + demo video | ⬜ Not started |
 | 10 — Small-model routing (optional) | ⬜ Not started |
@@ -107,6 +107,13 @@ pytest
   match → EMI → trap question refused → booking → CRM rows — runs as one
   automated end-to-end test through the webhook, including a webhook replay
   that changes nothing.
+- **Hinglish handling**: code-switch detection (romanized markers +
+  Devanagari script) plus native rule coverage for common Hinglish phrasings —
+  "70 lakh tak", "80 lakh ke andar", "1 cr se kam", "50 lakh se upar",
+  "3 kamre", "ghar lena hai", "turant", "2 mahine mein" — verified by a full
+  Hinglish conversation running end to end to a verified match. Devanagari
+  *extraction* relies on the LLM pass (rules cover romanized input), which is
+  a documented limitation without an API key, never silently wrong output.
 
 **Designed for extension — documented only, deliberately not built for this demo:**
 
