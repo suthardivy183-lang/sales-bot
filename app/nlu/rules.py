@@ -8,11 +8,10 @@ rules left empty — never override them. Includes common Hinglish markers
 
 import re
 
+from app.inr import CRORE, LAKH
 from app.nlu.schemas import ExtractedFields
 from app.state.models import Intent, Timeline
 
-LAKH = 100_000
-CRORE = 10_000_000
 THOUSAND = 1_000
 
 # Anything below 1 lakh is noise for a flat purchase, not a budget.

@@ -50,7 +50,7 @@ pytest
 | 1 — Conversation state + Qualification Agent | ✅ Done |
 | 2 — Property Search Tool (hybrid retrieval) | ✅ Done |
 | 3 — Pricing/EMI Tool | ✅ Done |
-| 4 — Evidence-linked response + Verification Agent | ⬜ Not started |
+| 4 — Evidence-linked response + Verification Agent | ✅ Done |
 | 5 — Idempotent action tools (CRM + booking) | ⬜ Not started |
 | 6 — Orchestrator wired end to end | ⬜ Not started |
 | 7 — Hinglish handling | ⬜ Not started |
@@ -83,6 +83,16 @@ pytest
   ((1+r)^n − 1)`) verified against hand-calculated values — no LLM ever does
   financial arithmetic. Default assumptions (8.5% p.a., 20 years, 20% down)
   are part of the quote object so replies must state them.
+- **Evidence-linked generation + deterministic verification** (the core of
+  this entry): every factual statement in a draft reply carries a structured
+  claim `{property_id, evidence_field, claimed_value}`. The Verification Agent
+  checks each claim against the property record before anything is sent —
+  supported claims ship, contradicted claims are rewritten with the record's
+  actual value, unsupported claims (like the private-pool trap question) are
+  refused outright and escalated to a human. EMI numbers are re-computed from
+  their own inputs, so a tampered or invented figure is corrected
+  deterministically. LLM-judged soft claims ("great for families") are a
+  designed extension, deliberately not built.
 
 **Designed for extension — documented only, deliberately not built for this demo:**
 
