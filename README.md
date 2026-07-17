@@ -54,7 +54,7 @@ pytest
 | 5 — Idempotent action tools (CRM + booking) | ✅ Done |
 | 6 — Orchestrator wired end to end | ✅ Done |
 | 7 — Hinglish handling | ✅ Done |
-| 8 — Evaluation suite | ⬜ Not started |
+| 8 — Evaluation suite | ✅ Done |
 | 9 — Docs + demo video | ⬜ Not started |
 | 10 — Small-model routing (optional) | ⬜ Not started |
 
@@ -125,8 +125,34 @@ pytest
 
 ## Evaluation results
 
-Will be produced by the Task 8 table-driven suite and reported here — a small
-hackathon evaluation set, not a production benchmark.
+One table-driven suite ([evals/cases.json](evals/cases.json), 58 cases), run
+with a single command:
+
+```bash
+python -m evals.run_evals
+```
+
+This is a **small hackathon evaluation set, not a production benchmark**. Two
+cases are deliberately known-hard (word-number budgets like "seventy five
+lakh", and Devanagari-only script without an LLM key) so the rates below are
+honest, not curated. Every case runs against the real production components —
+no mocks. The same targets are enforced as a CI gate in
+[tests/test_evals.py](tests/test_evals.py).
+
+| Category | Passed | Total | Rate | Target | Status |
+| --- | --- | --- | --- | --- | --- |
+| qualification | 9 | 10 | 90.0% | ≥90% | ✅ |
+| state_merging | 4 | 4 | 100.0% | ≥100% | ✅ |
+| retrieval | 8 | 8 | 100.0% | ≥90% | ✅ |
+| no_match | 4 | 4 | 100.0% | ≥100% | ✅ |
+| unsupported_claim | 6 | 6 | 100.0% | ≥100% | ✅ |
+| price_claim | 4 | 4 | 100.0% | ≥100% | ✅ |
+| emi | 5 | 5 | 100.0% | ≥100% | ✅ |
+| hinglish | 7 | 8 | 87.5% | ≥85% | ✅ |
+| ambiguous | 4 | 4 | 100.0% | ≥100% | ✅ |
+| booking_duplication | 2 | 2 | 100.0% | ≥100% | ✅ |
+| handoff | 3 | 3 | 100.0% | ≥100% | ✅ |
+| **Overall** | **56** | **58** | **96.6%** | — | — |
 
 ## Demo video
 

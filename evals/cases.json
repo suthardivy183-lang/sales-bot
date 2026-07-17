@@ -1,0 +1,70 @@
+[
+  {"category": "qualification", "name": "budget ceiling", "message": "My budget is under 80 lakh", "expected": {"budget_max": 8000000}},
+  {"category": "qualification", "name": "budget range", "message": "between 60 and 80 lakh", "expected": {"budget_min": 6000000, "budget_max": 8000000}},
+  {"category": "qualification", "name": "buy intent", "message": "I want to buy a flat in Ahmedabad", "expected": {"intent": "buy", "locality": null}},
+  {"category": "qualification", "name": "bhk digit", "message": "3BHK please", "expected": {"bhk": 3}},
+  {"category": "qualification", "name": "locality satellite", "message": "I prefer Satellite", "expected": {"locality": "Satellite"}},
+  {"category": "qualification", "name": "budget floor", "message": "above 50 lakh only", "expected": {"budget_min": 5000000, "budget_max": null}},
+  {"category": "qualification", "name": "timeline months", "message": "need it within 6 months", "expected": {"timeline": "within_6_months"}},
+  {"category": "qualification", "name": "bhk plus locality", "message": "2 bedroom near SG Highway", "expected": {"bhk": 2, "locality": "SG Highway"}},
+  {"category": "qualification", "name": "indian comma format", "message": "₹65,00,000 is my limit", "expected": {"budget_max": 6500000}},
+  {"category": "qualification", "name": "word-number budget (known-hard)", "message": "seventy five lakh budget", "expected": {"budget_max": 7500000}},
+
+  {"category": "state_merging", "name": "four-turn demo conversation", "messages": ["Hi, I want to buy a flat in Ahmedabad", "My budget is under 80 lakh", "I prefer Bopal area", "Looking for a 3BHK, need it within 6 months"], "expected": {"intent": "buy", "budget_max": 8000000, "locality": "Bopal", "bhk": 3, "timeline": "within_6_months", "stage": "qualified"}},
+  {"category": "state_merging", "name": "customer revises bhk", "messages": ["3BHK in Bopal under 80 lakh, buying", "Actually make that a 2BHK"], "expected": {"bhk": 2, "locality": "Bopal", "budget_max": 8000000, "stage": "qualified"}},
+  {"category": "state_merging", "name": "uninformative message is a no-op", "messages": ["3BHK in Bopal under 80 lakh, buying", "ok thanks"], "expected": {"bhk": 3, "stage": "qualified"}},
+  {"category": "state_merging", "name": "budget revised to a range", "messages": ["I want to buy a flat", "under 80 lakh", "actually between 60 and 70 lakh"], "expected": {"intent": "buy", "budget_min": 6000000, "budget_max": 7000000}},
+
+  {"category": "retrieval", "name": "task-2 done-when", "message": "2BHK in Bopal under 70 lakh", "expected_ids": [1]},
+  {"category": "retrieval", "name": "3bhk bopal in budget", "message": "3BHK in Bopal under 90 lakh", "expected_ids": [4]},
+  {"category": "retrieval", "name": "3bhk citywide by price", "message": "3BHK under 1 crore", "expected_ids": [4, 2]},
+  {"category": "retrieval", "name": "2bhk satellite", "message": "2BHK in Satellite", "expected_ids": [3]},
+  {"category": "retrieval", "name": "4bhk sg highway", "message": "4BHK on SG Highway", "expected_ids": [5]},
+  {"category": "retrieval", "name": "all bopal by price", "message": "flats in Bopal", "expected_ids": [1, 4]},
+  {"category": "retrieval", "name": "3bhk shela", "message": "3BHK in Shela", "expected_ids": [2]},
+  {"category": "retrieval", "name": "2bhk generous budget", "message": "2BHK under 1.2 cr", "expected_ids": [1, 3]},
+
+  {"category": "no_match", "name": "no 2bhk in shela", "message": "2BHK in Shela", "expected_ids": []},
+  {"category": "no_match", "name": "bopal 3bhk over budget", "message": "3BHK in Bopal under 80 lakh", "expected_ids": []},
+  {"category": "no_match", "name": "no 5bhk exists", "message": "5BHK anywhere", "expected_ids": []},
+  {"category": "no_match", "name": "no 1bhk in bopal", "message": "1BHK in Bopal", "expected_ids": []},
+
+  {"category": "unsupported_claim", "name": "THE TRAP: shela private pool", "property_id": 2, "question": "Does it have a private pool?"},
+  {"category": "unsupported_claim", "name": "gym on bopal 2bhk", "property_id": 1, "question": "Is there a gym?"},
+  {"category": "unsupported_claim", "name": "garden on bopal 3bhk", "property_id": 4, "question": "Does it have a garden?"},
+  {"category": "unsupported_claim", "name": "clubhouse on sg highway", "property_id": 5, "question": "Is there a clubhouse?"},
+  {"category": "unsupported_claim", "name": "parking on satellite", "property_id": 3, "question": "Does it come with parking?"},
+  {"category": "unsupported_claim", "name": "possession date on ready flat", "property_id": 4, "question": "What's the possession date?"},
+
+  {"category": "price_claim", "name": "bopal 2bhk wrong price", "property_id": 1, "claimed_price": 6000000, "expected_correction": "₹65 lakh"},
+  {"category": "price_claim", "name": "shela wrong price", "property_id": 2, "claimed_price": 9000000, "expected_correction": "₹95 lakh"},
+  {"category": "price_claim", "name": "bopal 3bhk wrong price", "property_id": 4, "claimed_price": 8000000, "expected_correction": "₹85 lakh"},
+  {"category": "price_claim", "name": "sg highway wrong price", "property_id": 5, "claimed_price": 15000000, "expected_correction": "₹1.8 crore"},
+
+  {"category": "emi", "name": "50L at 9pc 20y", "principal": 5000000, "annual_rate": 9.0, "months": 240, "expected_emi": 44986},
+  {"category": "emi", "name": "10L at 12pc 1y", "principal": 1000000, "annual_rate": 12.0, "months": 12, "expected_emi": 88849},
+  {"category": "emi", "name": "demo loan 68L at 8.5pc 20y", "principal": 6800000, "annual_rate": 8.5, "months": 240, "expected_emi": 59012},
+  {"category": "emi", "name": "zero rate simple division", "principal": 1200000, "annual_rate": 0.0, "months": 12, "expected_emi": 100000},
+  {"category": "emi", "name": "34L at 8.5pc 20y", "principal": 3400000, "annual_rate": 8.5, "months": 240, "expected_emi": 29506},
+
+  {"category": "hinglish", "name": "ceiling with tak", "message": "70 lakh tak ka budget hai", "expected": {"budget_max": 7000000}},
+  {"category": "hinglish", "name": "bhk locality chahiye", "message": "Bopal mein 2BHK chahiye", "expected": {"bhk": 2, "locality": "Bopal", "intent": "buy"}},
+  {"category": "hinglish", "name": "ghar lena", "message": "ghar lena hai Ahmedabad mein", "expected": {"intent": "buy"}},
+  {"category": "hinglish", "name": "cr se kam", "message": "1 cr se kam", "expected": {"budget_max": 10000000}},
+  {"category": "hinglish", "name": "kamre wala makaan", "message": "3 kamre wala makaan", "expected": {"bhk": 3, "intent": "buy"}},
+  {"category": "hinglish", "name": "turant timeline", "message": "turant chahiye", "expected": {"timeline": "immediate", "intent": "buy"}},
+  {"category": "hinglish", "name": "kiraye is rent", "message": "kiraye pe flat chahiye", "expected": {"intent": "rent"}},
+  {"category": "hinglish", "name": "devanagari script (known-hard)", "message": "मुझे 2 बीएचके चाहिए", "expected": {"bhk": 2, "intent": "buy"}},
+
+  {"category": "ambiguous", "name": "vague wish", "message": "looking for something nice"},
+  {"category": "ambiguous", "name": "bare greeting", "message": "hello"},
+  {"category": "ambiguous", "name": "tell me more", "message": "tell me more"},
+  {"category": "ambiguous", "name": "hinglish what options", "message": "kya options hai"},
+
+  {"category": "booking_duplication", "name": "webhook replay books one slot", "variant": "booking"},
+  {"category": "booking_duplication", "name": "webhook replay writes one crm row", "variant": "crm"},
+
+  {"category": "handoff", "name": "trap question escalates to human", "setup": ["buying a flat, 3BHK in Bopal, under 90 lakh"], "question": "Does the Shela property have a private pool?", "expect_reply_contains": "can't confirm", "expect_note_prefix": "HANDOFF"},
+  {"category": "handoff", "name": "gym question escalates to human", "setup": ["buying a flat, 3BHK in Bopal, under 90 lakh"], "question": "Is there a gym?", "expect_reply_contains": "can't confirm", "expect_note_prefix": "HANDOFF"},
+  {"category": "handoff", "name": "no slots left hands off", "setup": ["buying a flat, 3BHK in Bopal, under 90 lakh"], "question": "book a viewing", "pre_book_all": true, "expect_reply_contains": "human agent", "expect_note_prefix": "booking failed"}
+]
