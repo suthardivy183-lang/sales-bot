@@ -49,7 +49,7 @@ pytest
 | 0B — Real WhatsApp transport | ⬜ Not started |
 | 1 — Conversation state + Qualification Agent | ✅ Done |
 | 2 — Property Search Tool (hybrid retrieval) | ✅ Done |
-| 3 — Pricing/EMI Tool | ⬜ Not started |
+| 3 — Pricing/EMI Tool | ✅ Done |
 | 4 — Evidence-linked response + Verification Agent | ⬜ Not started |
 | 5 — Idempotent action tools (CRM + booking) | ⬜ Not started |
 | 6 — Orchestrator wired end to end | ⬜ Not started |
@@ -79,6 +79,10 @@ pytest
   "sasta") may only reorder the filtered candidates — it can never add a
   property back or drop one. Reranking is keyword-heuristic for the demo; an
   embedding reranker slots in behind the same signature (see roadmap).
+- Pricing/EMI Tool: pure reducing-balance amortization (`EMI = P·r·(1+r)^n /
+  ((1+r)^n − 1)`) verified against hand-calculated values — no LLM ever does
+  financial arithmetic. Default assumptions (8.5% p.a., 20 years, 20% down)
+  are part of the quote object so replies must state them.
 
 **Designed for extension — documented only, deliberately not built for this demo:**
 
