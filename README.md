@@ -51,7 +51,7 @@ pytest
 | 2 — Property Search Tool (hybrid retrieval) | ✅ Done |
 | 3 — Pricing/EMI Tool | ✅ Done |
 | 4 — Evidence-linked response + Verification Agent | ✅ Done |
-| 5 — Idempotent action tools (CRM + booking) | ⬜ Not started |
+| 5 — Idempotent action tools (CRM + booking) | ✅ Done |
 | 6 — Orchestrator wired end to end | ⬜ Not started |
 | 7 — Hinglish handling | ⬜ Not started |
 | 8 — Evaluation suite | ⬜ Not started |
@@ -93,6 +93,13 @@ pytest
   their own inputs, so a tampered or invented figure is corrected
   deterministically. LLM-judged soft claims ("great for families") are a
   designed extension, deliberately not built.
+- **Idempotent action tools**: CRM lead writes and viewing-slot bookings are
+  keyed by WhatsApp message ID through an action ledger — a replayed webhook
+  event returns the original result instead of re-executing, so duplicates are
+  structurally impossible (a PRIMARY KEY on the slot also rules out
+  double-booking). Two CRM backends behind one protocol: SQLite (local) and
+  Google Sheets (live demo sheet, REST). CRM rows and bookings store masked
+  phone numbers only, so the on-screen sheet in the demo can never leak PII.
 
 **Designed for extension — documented only, deliberately not built for this demo:**
 
