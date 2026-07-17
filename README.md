@@ -48,7 +48,7 @@ pytest
 | 0A — Local scaffold, mocked WhatsApp webhook + tests | ✅ Done |
 | 0B — Real WhatsApp transport | ⬜ Not started |
 | 1 — Conversation state + Qualification Agent | ✅ Done |
-| 2 — Property Search Tool (hybrid retrieval) | ⬜ Not started |
+| 2 — Property Search Tool (hybrid retrieval) | ✅ Done |
 | 3 — Pricing/EMI Tool | ⬜ Not started |
 | 4 — Evidence-linked response + Verification Agent | ⬜ Not started |
 | 5 — Idempotent action tools (CRM + booking) | ⬜ Not started |
@@ -73,6 +73,12 @@ pytest
   intent, and timeline are parsed deterministically; an optional Gemini pass
   fills only the fields rules couldn't parse and can never override them.
   Provider failures degrade gracefully to rules-only extraction.
+- Property Search Tool with **hybrid retrieval**: deterministic hard filters
+  (BHK, locality, price ceiling, possession status) over the five Ahmedabad
+  fixtures run first; a preference reranker ("ready soon", "family-friendly",
+  "sasta") may only reorder the filtered candidates — it can never add a
+  property back or drop one. Reranking is keyword-heuristic for the demo; an
+  embedding reranker slots in behind the same signature (see roadmap).
 
 **Designed for extension — documented only, deliberately not built for this demo:**
 

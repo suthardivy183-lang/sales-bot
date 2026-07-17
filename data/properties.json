@@ -1,0 +1,7 @@
+[
+  {"id": 1, "bhk": 2, "locality": "Bopal", "price": 6500000, "status": "ready_to_move"},
+  {"id": 2, "bhk": 3, "locality": "Shela", "price": 9500000, "status": "under_construction", "possession": "2026-12"},
+  {"id": 3, "bhk": 2, "locality": "Satellite", "price": 11000000, "status": "ready_to_move"},
+  {"id": 4, "bhk": 3, "locality": "Bopal", "price": 8500000, "status": "ready_to_move"},
+  {"id": 5, "bhk": 4, "locality": "SG Highway", "price": 18000000, "status": "ready_to_move"}
+]
