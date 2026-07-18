@@ -122,7 +122,7 @@ end-to-end test.
 
 ## Implemented vs. designed for extension
 
-### Implemented — working, tested (177 tests, `pytest`)
+### Implemented — working, tested (217 tests, `pytest`)
 
 - FastAPI webhook validating WhatsApp Cloud API payloads (mock-driven locally),
   with Meta's GET verification handshake and status-receipt handling.
@@ -147,11 +147,19 @@ end-to-end test.
   between rules-only (no LLM call — the common case here), a cheap model for
   short parse gaps, and a stronger model for ambiguous/negotiation-heavy or
   long turns. The decision is deterministic and logged every turn.
+- **ElevenLabs voice transport adapter**: a normalized transcript webhook at
+  `/voice/elevenlabs/webhook` reuses the same caller-keyed session state and
+  verification-first orchestrator as the text channel, with an automated
+  multi-turn test.
 
 ### Pending credentials (code ready, not yet wired live)
 
 - **Task 0B — real WhatsApp transport**: needs a Meta Cloud API test number
   (or Twilio Sandbox). The webhook contract is already provider-shaped.
+- **ElevenLabs dashboard tool mapping + live voice check**: the agent is
+  configured, but its webhook tool still needs the final dynamic-variable
+  mapping and one controlled call test. No audio credits were used during
+  configuration.
 - **Google Sheets as the live CRM backend**: needs a service-account JSON +
   spreadsheet ID; the backend is implemented and mock-tested.
 - **Gemini LLM pass**: needs `LLM_API_KEY`; everything runs rules-only today.
@@ -225,7 +233,7 @@ curl -s -X POST localhost:8000/webhook -H 'Content-Type: application/json' -d '{
 
 ## Evaluation results
 
-One table-driven suite ([evals/cases.json](evals/cases.json), 58 cases), run
+One table-driven suite ([evals/cases.json](evals/cases.json), 64 cases), run
 with a single command:
 
 ```bash
