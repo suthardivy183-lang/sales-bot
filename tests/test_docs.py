@@ -86,6 +86,11 @@ class TestDemoScript:
         assert "production channel" in README.lower()
         assert "simulator" in DEMO.lower()
 
+    def test_demo_covers_the_codex_hackathon_submission_requirements(self):
+        assert "Three-minute structure" in DEMO
+        assert "Codex build/test" in DEMO
+        assert "https://sales-bot-rust.vercel.app" in DEMO
+
 
 class TestNoSecretsInRepo:
     def test_no_env_or_credential_files_tracked(self):
