@@ -21,6 +21,7 @@ class Settings(BaseSettings):
 
     # WhatsApp transport (Task 0B)
     whatsapp_verify_token: str = "change-me"
+    whatsapp_app_secret: str = ""
     whatsapp_access_token: str = ""
     whatsapp_phone_number_id: str = ""
     whatsapp_graph_api_version: str = ""

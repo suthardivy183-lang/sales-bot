@@ -5,6 +5,7 @@ from app.config import Settings, get_settings
 from app.main import create_app
 
 TEST_VERIFY_TOKEN = "test-verify-token"
+TEST_APP_SECRET = "test-app-secret"
 
 
 def make_test_settings(tmp_path) -> Settings:

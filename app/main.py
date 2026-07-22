@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse
 
 from app.config import Settings, get_settings
+from app.actions.ledger import ActionLedger
 from app.gateway.client import WhatsAppCloudSender
 from app.deps import build_orchestrator
 from app.gateway.router import router as gateway_router
@@ -16,6 +17,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app_settings = settings or get_settings()
     app = FastAPI(title="Sales Copilot", docs_url=None, redoc_url=None)
     app.state.orchestrator = build_orchestrator(app_settings)
+    app.state.whatsapp_reply_ledger = ActionLedger(app_settings.database_path)
     app.state.whatsapp_sender = (
         WhatsAppCloudSender(
             access_token=app_settings.whatsapp_access_token,

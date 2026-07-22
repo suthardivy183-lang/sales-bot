@@ -1,7 +1,18 @@
-"""Task 0A: a mocked WhatsApp payload posted locally must get a reply back."""
+"""Task 0A/0B: mocked WhatsApp webhook behavior and transport security."""
 
+import hashlib
+import hmac
+import json
+
+from app.gateway.client import WhatsAppSendError
 from app.privacy import mask_phone
-from tests.conftest import TEST_VERIFY_TOKEN, make_status_payload, make_whatsapp_payload
+from tests.conftest import (
+    TEST_APP_SECRET,
+    TEST_VERIFY_TOKEN,
+    make_status_payload,
+    make_test_settings,
+    make_whatsapp_payload,
+)
 
 
 class RecordingSender:
@@ -10,6 +21,20 @@ class RecordingSender:
 
     def send_text(self, recipient: str, body: str) -> None:
         self.sent.append((recipient, body))
+
+
+class FailingSender:
+    def send_text(self, recipient: str, body: str) -> None:
+        raise WhatsAppSendError("simulated transport failure")
+
+
+def signed_payload(payload: dict) -> tuple[bytes, dict[str, str]]:
+    body = json.dumps(payload, separators=(",", ":")).encode()
+    signature = hmac.new(TEST_APP_SECRET.encode(), body, hashlib.sha256).hexdigest()
+    return body, {
+        "Content-Type": "application/json",
+        "X-Hub-Signature-256": f"sha256={signature}",
+    }
 
 
 class TestReceiveWebhook:
@@ -40,6 +65,27 @@ class TestReceiveWebhook:
         assert response.status_code == 200
         assert sender.sent == [("919999000011", response.json()["replies"][0]["reply"])]
         assert response.json()["replies"][0]["delivered"] is True
+
+    def test_replayed_message_is_not_sent_twice(self, client):
+        sender = RecordingSender()
+        client.app.state.whatsapp_sender = sender
+        payload = make_whatsapp_payload(message_id="wamid.REPLAY-1")
+
+        first = client.post("/webhook", json=payload)
+        replay = client.post("/webhook", json=payload)
+
+        assert first.status_code == replay.status_code == 200
+        assert first.json()["replies"] == replay.json()["replies"]
+        assert len(sender.sent) == 1
+
+    def test_sender_failure_is_acknowledged_and_can_be_retried(self, client):
+        client.app.state.whatsapp_sender = FailingSender()
+        payload = make_whatsapp_payload(message_id="wamid.SEND-FAILURE")
+
+        response = client.post("/webhook", json=payload)
+
+        assert response.status_code == 200
+        assert response.json()["replies"][0]["delivered"] is False
 
     def test_status_only_payload_is_acknowledged_without_reply(self, client):
         response = client.post("/webhook", json=make_status_payload())
@@ -76,6 +122,45 @@ class TestVerifyWebhook:
                 "hub.challenge": "challenge-12345",
             },
         )
+
+        assert response.status_code == 403
+
+
+class TestWebhookSignature:
+    def test_valid_signature_is_accepted(self, tmp_path):
+        from fastapi.testclient import TestClient
+
+        from app.config import get_settings
+        from app.main import create_app
+
+        settings = make_test_settings(tmp_path).model_copy(
+            update={"whatsapp_app_secret": TEST_APP_SECRET}
+        )
+        app = create_app(settings)
+        app.dependency_overrides[get_settings] = lambda: settings
+        body, headers = signed_payload(make_whatsapp_payload())
+
+        with TestClient(app) as signed_client:
+            response = signed_client.post("/webhook", content=body, headers=headers)
+
+        assert response.status_code == 200
+
+    def test_missing_or_invalid_signature_is_rejected(self, tmp_path):
+        from fastapi.testclient import TestClient
+
+        from app.config import get_settings
+        from app.main import create_app
+
+        settings = make_test_settings(tmp_path).model_copy(
+            update={"whatsapp_app_secret": TEST_APP_SECRET}
+        )
+        app = create_app(settings)
+        app.dependency_overrides[get_settings] = lambda: settings
+        body, headers = signed_payload(make_whatsapp_payload())
+        headers["X-Hub-Signature-256"] = "sha256=not-a-real-signature"
+
+        with TestClient(app) as signed_client:
+            response = signed_client.post("/webhook", content=body, headers=headers)
 
         assert response.status_code == 403
 
