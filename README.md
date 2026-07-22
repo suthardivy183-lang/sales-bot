@@ -1,6 +1,6 @@
 # Sales Copilot — a WhatsApp sales system that can't confidently lie
 
-**FlowZint AI Hackathon 2026 · Sales Bot track**
+**ChatGPT Codex Hackathon 2026 · Domain Agents / AI for Bharat’s Businesses**
 
 An agentic sales system for WhatsApp, demoed against one vertical done well:
 **residential real estate in Ahmedabad**. Not a prompt wired to WhatsApp — a
@@ -14,6 +14,10 @@ simulator, running the real backend. Tap the prompts to walk the demo,
 including the trap question.
 
 📹 **Demo video:** _TODO — add public link before submission (see checklist below)._
+
+📝 **Project description:** [SUBMISSION.md](SUBMISSION.md) is the approved
+source content for the required public Google Doc. _TODO — publish the Doc and
+add its share link before final submission._
 
 > **Note on the hosted demo:** Vercel is serverless, so session state lives in
 > ephemeral `/tmp` SQLite — fine for a single continuous demo, but it resets on
@@ -122,10 +126,11 @@ end-to-end test.
 
 ## Implemented vs. designed for extension
 
-### Implemented — working, tested (217 tests, `pytest`)
+### Implemented — working, tested (232 tests, `pytest`)
 
 - FastAPI webhook validating WhatsApp Cloud API payloads (mock-driven locally),
-  with Meta's GET verification handshake and status-receipt handling.
+  with Meta's GET verification handshake, optional HMAC signature validation,
+  status-receipt handling, and replay-safe outbound delivery.
 - Multi-turn conversation state in SQLite keyed by WhatsApp number.
 - Qualification Agent: deterministic parsing of Indian budget formats
   (`70 lakh`, `1.2 cr`, `60–80 lakh`, `₹65,00,000`), BHK, locality, intent,
@@ -136,7 +141,9 @@ end-to-end test.
 - Evidence-linked Response Generator + deterministic Verification Agent
   (the trap question is refused; wrong prices are corrected from the record).
 - Idempotent CRM + booking tools behind an action ledger; SQLite and Google
-  Sheets CRM backends behind one protocol.
+  Sheets CRM backends behind one protocol. The Sheets backend accepts a
+  deployment-safe service-account JSON environment value and fails safely on
+  incomplete configuration.
 - Orchestrator wiring the full flow; the complete Ahmedabad demo scenario runs
   as one automated test, including a webhook replay that changes nothing.
 - Hinglish: code-switch detection + native rule coverage ("70 lakh tak",
@@ -154,14 +161,17 @@ end-to-end test.
 
 ### Pending credentials (code ready, not yet wired live)
 
-- **Task 0B — real WhatsApp transport**: needs a Meta Cloud API test number
-  (or Twilio Sandbox). The webhook contract is already provider-shaped.
+- **Task 0B — real WhatsApp transport**: outbound Meta Cloud API support,
+  signature validation, and reply replay protection are implemented; it needs
+  a test number, credentials, callback configuration, and one controlled live
+  round trip.
 - **ElevenLabs dashboard tool mapping + live voice check**: the agent is
   configured, but its webhook tool still needs the final dynamic-variable
   mapping and one controlled call test. No audio credits were used during
   configuration.
 - **Google Sheets as the live CRM backend**: needs a service-account JSON +
-  spreadsheet ID; the backend is implemented and mock-tested.
+  spreadsheet ID in deployment secrets, a shared spreadsheet, and one
+  controlled append test; the backend is implemented and mock-tested.
 - **Gemini LLM pass**: needs `LLM_API_KEY`; everything runs rules-only today.
 
 ### Designed for extension — documented only, deliberately NOT built
@@ -189,7 +199,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env        # fill in your own values; never commit .env
 
-pytest                      # 177 tests
+pytest                      # 232 tests
 python -m evals.run_evals   # evaluation table below
 uvicorn app.main:app --reload
 ```
@@ -261,14 +271,14 @@ no mocks. The same targets are enforced as a CI gate in
 | booking_duplication | 2 | 2 | 100.0% | ≥100% | ✅ |
 | handoff | 3 | 3 | 100.0% | ≥100% | ✅ |
 | routing | 6 | 6 | 100.0% | ≥100% | ✅ |
-| **Overall** | **56** | **64** | **96.9%** | — | — |
+| **Overall** | **62** | **64** | **96.9%** | — | — |
 
 ## Build progress
 
 | Task | Status |
 | --- | --- |
 | 0A — Local scaffold, mocked WhatsApp webhook + tests | ✅ Done |
-| 0B — Real WhatsApp transport | 🔑 Pending credentials |
+| 0B — Real WhatsApp transport | 🧪 Code complete; controlled live test pending |
 | 1 — Conversation state + Qualification Agent | ✅ Done |
 | 2 — Property Search Tool (hybrid retrieval) | ✅ Done |
 | 3 — Pricing/EMI Tool | ✅ Done |
@@ -277,7 +287,7 @@ no mocks. The same targets are enforced as a CI gate in
 | 6 — Orchestrator wired end to end | ✅ Done |
 | 7 — Hinglish handling | ✅ Done |
 | 8 — Evaluation suite | ✅ Done |
-| 9 — Docs + demo script | ✅ Done (video pending) |
+| 9 — Docs + demo script | 🧪 Repo docs complete; public Google Doc + video pending |
 | 10 — Small-model routing (optional) | ✅ Done (opt-in) |
 
 ## Demo
@@ -288,7 +298,8 @@ moment is the centerpiece.
 
 **Submission checklist**
 
-- [ ] Repo is public (verify explicitly, don't assume)
+- [x] Repo is public (unauthenticated HTTPS check passed 2026-07-22)
+- [ ] Public Google Doc created from `SUBMISSION.md` and linked here
 - [ ] Demo video is public, 2–3 minutes, includes the trap-question moment
 - [ ] No phone numbers or tokens visible in the video or screenshots
 - [ ] Demo video link added at the top of this README
@@ -323,5 +334,5 @@ app/
 └── actions/           # idempotent CRM + booking + action ledger
 data/properties.json   # the five demo fixtures (no private_pool — deliberate)
 evals/                 # table-driven eval cases + runner
-tests/                 # 177 tests incl. full end-to-end demo scenario
+tests/                 # 232 tests incl. full end-to-end demo scenario
 ```

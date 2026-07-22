@@ -63,8 +63,13 @@ class TestReadme:
         assert extension_item in README
 
     def test_eval_table_is_present_with_overall_rate(self):
-        assert "| **Overall** | **56** | **64** | **96.9%**" in README
+        assert "| **Overall** | **62** | **64** | **96.9%**" in README
         assert "not a production benchmark" in README
+
+    def test_codex_hackathon_positioning_is_documented(self):
+        assert "ChatGPT Codex Hackathon 2026" in README
+        assert "Domain Agents / AI for Bharat" in README
+        assert "SUBMISSION.md" in README
 
 
 class TestDemoScript:
