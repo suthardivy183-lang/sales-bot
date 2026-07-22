@@ -6,6 +6,7 @@ via httpx). Idempotency lives in CrmTool via the ActionLedger, so replays are
 safe with either backend.
 """
 
+import json
 import sqlite3
 from contextlib import contextmanager
 from datetime import UTC, datetime
@@ -13,6 +14,8 @@ from pathlib import Path
 from typing import Callable, Protocol
 
 import httpx
+from google.auth.transport.requests import Request as GoogleAuthRequest
+from google.oauth2 import service_account
 
 from app.actions.ledger import ActionLedger
 from app.actions.models import CrmError, CrmLead, CrmWriteResult
@@ -20,6 +23,7 @@ from app.privacy import mask_phone
 from app.state.models import SessionState
 
 CRM_ACTION = "crm_lead"
+GOOGLE_SHEETS_SCOPE = "https://www.googleapis.com/auth/spreadsheets"
 
 SHEET_COLUMNS = (
     "created_at",
@@ -136,6 +140,34 @@ class SheetsCrmBackend:
             raise CrmError(
                 f"Sheets API returned {response.status_code}: {response.text[:200]}"
             )
+
+
+def google_sheets_token_supplier(service_account_json: str) -> Callable[[], str]:
+    """Build a refreshable access-token supplier from an environment value.
+
+    The complete service-account JSON stays in the host's secret store; no key
+    file needs to be present in the deployed container or repository.
+    """
+    try:
+        info = json.loads(service_account_json)
+        if not isinstance(info, dict):
+            raise ValueError("service-account JSON must be an object")
+        credentials = service_account.Credentials.from_service_account_info(
+            info, scopes=[GOOGLE_SHEETS_SCOPE]
+        )
+    except (ValueError, TypeError) as exc:
+        raise CrmError("Invalid Google Sheets service-account configuration") from exc
+
+    request = GoogleAuthRequest()
+
+    def get_token() -> str:
+        if not credentials.valid:
+            credentials.refresh(request)
+        if not credentials.token:
+            raise CrmError("Google Sheets service account did not return an access token")
+        return credentials.token
+
+    return get_token
 
 
 class CrmTool:

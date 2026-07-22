@@ -40,7 +40,7 @@ class Settings(BaseSettings):
     llm_model_large: str = "gemini-2.5-flash"
 
     # Google Sheets CRM (Task 5)
-    google_sheets_credentials_file: str = ""
+    google_sheets_service_account_json: str = ""
     google_sheets_spreadsheet_id: str = ""
 
 
