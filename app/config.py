@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     whatsapp_verify_token: str = "change-me"
     whatsapp_access_token: str = ""
     whatsapp_phone_number_id: str = ""
+    whatsapp_graph_api_version: str = ""
 
     # Session storage (Task 1)
     database_path: str = _default_database_path()

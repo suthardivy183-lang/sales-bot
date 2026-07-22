@@ -4,6 +4,14 @@ from app.privacy import mask_phone
 from tests.conftest import TEST_VERIFY_TOKEN, make_status_payload, make_whatsapp_payload
 
 
+class RecordingSender:
+    def __init__(self):
+        self.sent: list[tuple[str, str]] = []
+
+    def send_text(self, recipient: str, body: str) -> None:
+        self.sent.append((recipient, body))
+
+
 class TestReceiveWebhook:
     def test_mock_message_round_trips_with_reply(self, client):
         response = client.post("/webhook", json=make_whatsapp_payload())
@@ -22,6 +30,16 @@ class TestReceiveWebhook:
 
         assert wa_id not in response.text
         assert response.json()["replies"][0]["to"] == mask_phone(wa_id)
+
+    def test_configured_sender_delivers_the_verified_reply(self, client):
+        sender = RecordingSender()
+        client.app.state.whatsapp_sender = sender
+
+        response = client.post("/webhook", json=make_whatsapp_payload())
+
+        assert response.status_code == 200
+        assert sender.sent == [("919999000011", response.json()["replies"][0]["reply"])]
+        assert response.json()["replies"][0]["delivered"] is True
 
     def test_status_only_payload_is_acknowledged_without_reply(self, client):
         response = client.post("/webhook", json=make_status_payload())

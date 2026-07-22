@@ -12,6 +12,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import PlainTextResponse
 
 from app.config import Settings, get_settings
+from app.gateway.client import WhatsAppSendError
 from app.gateway.schemas import WebhookPayload, extract_incoming_messages
 from app.privacy import mask_phone
 
@@ -41,13 +42,24 @@ def receive_webhook(payload: WebhookPayload, request: Request) -> dict:
         return {"status": "ignored", "replies": []}
 
     orchestrator = request.app.state.orchestrator
+    sender = request.app.state.whatsapp_sender
     replies = []
     for message in messages:
         logger.info("Inbound message from %s", mask_phone(message.wa_id))
+        reply = orchestrator.handle_message(message)
+        delivered = False
+        if sender is not None:
+            try:
+                sender.send_text(message.wa_id, reply)
+                delivered = True
+            except WhatsAppSendError as exc:
+                # Return 200 to avoid a Meta retry duplicating downstream actions.
+                logger.error("WhatsApp reply delivery failed for %s: %s", mask_phone(message.wa_id), exc)
         replies.append(
             {
                 "to": mask_phone(message.wa_id),
-                "reply": orchestrator.handle_message(message),
+                "reply": reply,
+                "delivered": delivered,
             }
         )
     return {"status": "received", "replies": replies}
