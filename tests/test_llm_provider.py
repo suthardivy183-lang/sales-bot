@@ -138,6 +138,36 @@ class TestHybridExtractor:
         assert fields.bhk == 3
         assert fields.timeline == Timeline.IMMEDIATE
 
+    def test_provider_failure_preserves_rule_derived_fields(self):
+        llm = LLMExtractor(FakeProvider(LLMProviderError("service unavailable")))
+
+        fields = HybridExtractor(llm).extract("3BHK in Bopal under 80 lakh")
+
+        assert fields.bhk == 3
+        assert fields.locality == "Bopal"
+        assert fields.budget_max == 8_000_000
+
+    def test_llm_can_fill_devanagari_turn_without_overriding_rules(self):
+        llm = LLMExtractor(
+            FakeProvider(
+                {
+                    "intent": "buy",
+                    "locality": "Bopal",
+                    "budget_max": 8_000_000,
+                    "bhk": 3,
+                    "timeline": "within_6_months",
+                }
+            )
+        )
+
+        fields = HybridExtractor(llm).extract("मुझे बोपल में घर चाहिए")
+
+        assert fields.intent == Intent.BUY
+        assert fields.locality == "Bopal"
+        assert fields.budget_max == 8_000_000
+        assert fields.bhk == 3
+        assert fields.timeline == Timeline.WITHIN_6_MONTHS
+
     def test_merge_preferring_is_field_wise(self):
         primary = ExtractedFields(bhk=2)
         secondary = ExtractedFields(bhk=4, locality="Shela")
