@@ -18,6 +18,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app = FastAPI(title="Sales Copilot", docs_url=None, redoc_url=None)
     app.state.orchestrator = build_orchestrator(app_settings)
     app.state.whatsapp_reply_ledger = ActionLedger(app_settings.database_path)
+    app.state.voice_reply_ledger = ActionLedger(app_settings.database_path)
     app.state.whatsapp_sender = (
         WhatsAppCloudSender(
             access_token=app_settings.whatsapp_access_token,

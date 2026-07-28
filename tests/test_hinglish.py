@@ -45,6 +45,8 @@ class TestHinglishExtraction:
         ("90 lakh ke aas paas", None, 9_000_000),
         ("50 lakh se upar wala", 5_000_000, None),
         ("60 se 80 lakh ke beech", 6_000_000, 8_000_000),
+        ("sattar lakh tak", None, 7_000_000),
+        ("seventy five lakh under", None, 7_500_000),
     ]
 
     @pytest.mark.parametrize(("text", "expected_min", "expected_max"), BUDGET_CASES)
@@ -78,6 +80,7 @@ class TestHinglishExtraction:
             ("turant chahiye", Timeline.IMMEDIATE),
             ("abhi shift hona hai", Timeline.IMMEDIATE),
             ("2 mahine mein chahiye", Timeline.WITHIN_3_MONTHS),
+            ("teen mahine mein chahiye", Timeline.WITHIN_3_MONTHS),
             ("agle mahine tak", Timeline.WITHIN_3_MONTHS),
         ],
     )

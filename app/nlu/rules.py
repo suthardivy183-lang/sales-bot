@@ -58,15 +58,85 @@ _PLAIN_RUPEES_RE = re.compile(r"\b(\d{6,})\b")
 _BHK_DIGIT_RE = re.compile(
     r"\b(\d)\s*-?\s*(?:bhk|bed(?:room)?s?|kamr(?:a|e|on?))\b", re.IGNORECASE
 )
-_WORD_NUMBERS = {"one": 1, "two": 2, "three": 3, "four": 4, "five": 5}
+_WORD_NUMBERS = {
+    "one": 1,
+    "two": 2,
+    "three": 3,
+    "four": 4,
+    "five": 5,
+    "ek": 1,
+    "do": 2,
+    "teen": 3,
+    "char": 4,
+    "chaar": 4,
+}
 _BHK_WORD_RE = re.compile(
     rf"\b({'|'.join(_WORD_NUMBERS)})\s*-?\s*(?:bhk|bed(?:room)?s?)\b", re.IGNORECASE
 )
 
+_SPOKEN_TENS = {
+    "twenty": 20,
+    "thirty": 30,
+    "forty": 40,
+    "fifty": 50,
+    "sixty": 60,
+    "seventy": 70,
+    "eighty": 80,
+    "ninety": 90,
+}
+_SPOKEN_ONES = {
+    "one": 1,
+    "two": 2,
+    "three": 3,
+    "four": 4,
+    "five": 5,
+    "six": 6,
+    "seven": 7,
+    "eight": 8,
+    "nine": 9,
+}
+_SPOKEN_HINGLISH_AMOUNTS = {
+    "bees": 20,
+    "tees": 30,
+    "chaalis": 40,
+    "pachaas": 50,
+    "saath": 60,
+    "sattar": 70,
+    "assi": 80,
+    "nabbe": 90,
+}
+_SPOKEN_AMOUNT_RE = re.compile(
+    r"\b(?:(?P<tens>twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)"
+    r"(?:\s+(?P<ones>one|two|three|four|five|six|seven|eight|nine))?"
+    r"|(?P<hinglish>bees|tees|chaalis|pachaas|saath|sattar|assi|nabbe))"
+    r"(?=\s*(?:lakhs?|lacs?|crores?|cr|l|k)\b)",
+    re.IGNORECASE,
+)
+_SPOKEN_DURATION_RE = re.compile(
+    r"\b(ek|do|teen|char|chaar|paanch|six|seven|eight|nine)"
+    r"(?=\s*(?:months?|mahine|mahina|mahino)\b)",
+    re.IGNORECASE,
+)
+_SPOKEN_DURATION_VALUES = {
+    "ek": 1,
+    "do": 2,
+    "teen": 3,
+    "char": 4,
+    "chaar": 4,
+    "paanch": 5,
+    "six": 6,
+    "seven": 7,
+    "eight": 8,
+    "nine": 9,
+}
+
 # Canonical names must match the property fixtures exactly (Task 2 reuses this).
 LOCALITY_ALIASES = {
     "bopal": "Bopal",
+    "bopaal": "Bopal",
     "shela": "Shela",
+    "shelaa": "Shela",
+    "sheela": "Shela",
     "satellite": "Satellite",
     "sg highway": "SG Highway",
     "s g highway": "SG Highway",
@@ -91,14 +161,27 @@ _YEARISH_RE = re.compile(r"\b(?:next\s+year|1\s*year|a\s+year)\b", re.IGNORECASE
 
 
 def _normalize(text: str) -> str:
-    """Lowercase, join Indian-format digit groups, drop dots and currency markers."""
+    """Normalize typed and likely speech-to-text qualification phrases."""
     result = text.lower()
     result = re.sub(r"(?<=\d),(?=\d)", "", result)
     # Drop dots (e.g. "s.g. highway") but preserve decimal points ("1.2 cr").
     result = re.sub(r"(?<!\d)\.|\.(?!\d)", " ", result)
     result = result.replace("₹", " ")
     result = re.sub(r"\b(?:rs|inr)\b", " ", result)
+    result = _SPOKEN_AMOUNT_RE.sub(_spoken_amount_to_digits, result)
+    result = _SPOKEN_DURATION_RE.sub(
+        lambda match: str(_SPOKEN_DURATION_VALUES[match.group(1).lower()]), result
+    )
     return re.sub(r"\s+", " ", result).strip()
+
+
+def _spoken_amount_to_digits(match: re.Match[str]) -> str:
+    hinglish = match.group("hinglish")
+    if hinglish:
+        return str(_SPOKEN_HINGLISH_AMOUNTS[hinglish.lower()])
+    tens = _SPOKEN_TENS[match.group("tens").lower()]
+    ones = match.group("ones")
+    return str(tens + (_SPOKEN_ONES[ones.lower()] if ones else 0))
 
 
 def _amount(number: str, unit: str | None) -> int:

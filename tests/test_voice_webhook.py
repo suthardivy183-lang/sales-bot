@@ -38,3 +38,54 @@ class TestElevenLabsVoiceWebhook:
         assert "budget" in first.json()["reply"].lower()
         assert second.status_code == 200
         assert "area" in second.json()["reply"].lower()
+
+    def test_replayed_voice_event_returns_cached_reply_without_double_booking(self, client):
+        caller_phone_number = "919999000011"
+        for event_id, transcript in (
+            ("voice-1", "I want a flat in Ahmedabad"),
+            ("voice-2", "Under 90 lakh"),
+            ("voice-3", "Bopal"),
+            ("voice-4", "3BHK, ready to move"),
+        ):
+            client.post(
+                "/voice/elevenlabs/webhook",
+                json=make_elevenlabs_payload(
+                    transcript=transcript,
+                    caller_phone_number=caller_phone_number,
+                    event_id=event_id,
+                ),
+            )
+
+        booking = make_elevenlabs_payload(
+            transcript="book a viewing",
+            caller_phone_number=caller_phone_number,
+            event_id="voice-booking",
+        )
+        first = client.post("/voice/elevenlabs/webhook", json=booking)
+        replay = client.post("/voice/elevenlabs/webhook", json=booking)
+
+        assert first.json() == replay.json()
+        assert len(client.app.state.orchestrator._booking.available_slots()) == 3
+
+    def test_spoken_hinglish_transcript_reaches_a_verified_match(self, client):
+        caller_phone_number = "918888000022"
+        messages = (
+            ("spoken-1", "Mujhe Ahmedabad mein flat chahiye"),
+            ("spoken-2", "sattar lakh tak"),
+            ("spoken-3", "Bopaal mein"),
+            ("spoken-4", "do BHK, teen mahine mein"),
+        )
+        replies = []
+        for event_id, transcript in messages:
+            response = client.post(
+                "/voice/elevenlabs/webhook",
+                json=make_elevenlabs_payload(
+                    transcript=transcript,
+                    caller_phone_number=caller_phone_number,
+                    event_id=event_id,
+                ),
+            )
+            replies.append(response.json()["reply"])
+
+        assert "2BHK in Bopal" in replies[-1]
+        assert "₹65 lakh" in replies[-1]

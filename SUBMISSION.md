@@ -51,8 +51,8 @@ evidence trail for every factual property response.
 
 ## Evidence of quality
 
-- 233 automated tests
-- 64-case hackathon evaluation set: 62/64 passed (96.9%)
+- 238 automated tests
+- 64-case hackathon evaluation set: 63/64 passed (98.4%)
 - 100% on the evaluation sets for unsupported-claim blocking, price-claim
   correction, EMI, booking duplication, and human handoff
 - Public deployed simulator: https://sales-bot-rust.vercel.app

@@ -10,6 +10,8 @@ from app.privacy import mask_phone
 
 logger = logging.getLogger(__name__)
 
+VOICE_REPLY_ACTION = "elevenlabs_voice_reply"
+
 router = APIRouter(prefix="/voice/elevenlabs")
 
 
@@ -25,6 +27,11 @@ class ElevenLabsVoicePayload(BaseModel):
 @router.post("/webhook")
 def receive_voice_webhook(payload: ElevenLabsVoicePayload, request: Request) -> dict:
     """Send one spoken turn through the same orchestrator as WhatsApp."""
+    reply_ledger = request.app.state.voice_reply_ledger
+    replayed = reply_ledger.get(payload.event_id, VOICE_REPLY_ACTION)
+    if replayed is not None:
+        return {"reply": replayed["reply"]}
+
     message = IncomingMessage(
         wa_id=payload.caller_phone_number,
         message_id=payload.event_id,
@@ -33,4 +40,5 @@ def receive_voice_webhook(payload: ElevenLabsVoicePayload, request: Request) -> 
     )
     logger.info("Inbound voice transcript from %s", mask_phone(message.wa_id))
     reply = request.app.state.orchestrator.handle_message(message)
+    reply_ledger.record(payload.event_id, VOICE_REPLY_ACTION, {"reply": reply})
     return {"reply": reply}

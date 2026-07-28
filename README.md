@@ -126,7 +126,7 @@ end-to-end test.
 
 ## Implemented vs. designed for extension
 
-### Implemented — working, tested (233 tests, `pytest`)
+### Implemented — working, tested (238 tests, `pytest`)
 
 - FastAPI webhook validating WhatsApp Cloud API payloads (mock-driven locally),
   with Meta's GET verification handshake, optional HMAC signature validation,
@@ -156,8 +156,9 @@ end-to-end test.
   long turns. The decision is deterministic and logged every turn.
 - **ElevenLabs voice transport adapter**: a normalized transcript webhook at
   `/voice/elevenlabs/webhook` reuses the same caller-keyed session state and
-  verification-first orchestrator as the text channel, with an automated
-  multi-turn test.
+  verification-first orchestrator as the text channel. Spoken Hinglish
+  normalization covers common budget, BHK, timeline, and locality variants;
+  duplicate voice event IDs return the cached reply without replaying actions.
 
 ### Pending credentials (code ready, not yet wired live)
 
@@ -199,7 +200,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env        # fill in your own values; never commit .env
 
-pytest                      # 233 tests
+pytest                      # 238 tests
 python -m evals.run_evals   # evaluation table below
 uvicorn app.main:app --reload
 ```
@@ -250,16 +251,15 @@ with a single command:
 python -m evals.run_evals
 ```
 
-This is a **small hackathon evaluation set, not a production benchmark**. Two
-cases are deliberately known-hard (word-number budgets like "seventy five
-lakh", and Devanagari-only script without an LLM key) so the rates below are
-honest, not curated. Every case runs against the real production components —
-no mocks. The same targets are enforced as a CI gate in
+This is a **small hackathon evaluation set, not a production benchmark**. The
+remaining known-hard case is Devanagari-only script without an LLM key, so the
+rates below are honest, not curated. Every case runs against the real
+production components — no mocks. The same targets are enforced as a CI gate in
 [tests/test_evals.py](tests/test_evals.py).
 
 | Category | Passed | Total | Rate | Target | Status |
 | --- | --- | --- | --- | --- | --- |
-| qualification | 9 | 10 | 90.0% | ≥90% | ✅ |
+| qualification | 10 | 10 | 100.0% | ≥90% | ✅ |
 | state_merging | 4 | 4 | 100.0% | ≥100% | ✅ |
 | retrieval | 8 | 8 | 100.0% | ≥90% | ✅ |
 | no_match | 4 | 4 | 100.0% | ≥100% | ✅ |
@@ -271,7 +271,7 @@ no mocks. The same targets are enforced as a CI gate in
 | booking_duplication | 2 | 2 | 100.0% | ≥100% | ✅ |
 | handoff | 3 | 3 | 100.0% | ≥100% | ✅ |
 | routing | 6 | 6 | 100.0% | ≥100% | ✅ |
-| **Overall** | **62** | **64** | **96.9%** | — | — |
+| **Overall** | **63** | **64** | **98.4%** | — | — |
 
 ## Build progress
 
@@ -334,5 +334,5 @@ app/
 └── actions/           # idempotent CRM + booking + action ledger
 data/properties.json   # the five demo fixtures (no private_pool — deliberate)
 evals/                 # table-driven eval cases + runner
-tests/                 # 233 tests incl. full end-to-end demo scenario
+tests/                 # 238 tests incl. full end-to-end demo scenario
 ```
