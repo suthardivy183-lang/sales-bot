@@ -1,5 +1,10 @@
 """V1: ElevenLabs voice turns reuse the existing sales orchestrator."""
 
+from fastapi.testclient import TestClient
+
+from app.config import Settings
+from app.main import create_app
+
 
 def make_elevenlabs_payload(
     transcript: str = "I want a flat in Ahmedabad",
@@ -101,3 +106,24 @@ class TestElevenLabsVoiceWebhook:
 
         assert response.status_code == 200
         assert "human sales agent" in response.json()["reply"].lower()
+
+    def test_rejects_invalid_secret_when_voice_secret_is_configured(self, tmp_path):
+        app = create_app(
+            Settings(
+                database_path=str(tmp_path / "secured-voice.db"),
+                elevenlabs_webhook_secret="test-voice-secret",
+                _env_file=None,
+            )
+        )
+        client = TestClient(app)
+        payload = make_elevenlabs_payload()
+
+        rejected = client.post("/voice/elevenlabs/webhook", json=payload)
+        accepted = client.post(
+            "/voice/elevenlabs/webhook",
+            json=payload,
+            headers={"X-Voice-Webhook-Secret": "test-voice-secret"},
+        )
+
+        assert rejected.status_code == 401
+        assert accepted.status_code == 200

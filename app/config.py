@@ -26,6 +26,9 @@ class Settings(BaseSettings):
     whatsapp_phone_number_id: str = ""
     whatsapp_graph_api_version: str = ""
 
+    # ElevenLabs voice webhook tool (optional locally; required for public use)
+    elevenlabs_webhook_secret: str = ""
+
     # Session storage (Task 1)
     database_path: str = _default_database_path()
 

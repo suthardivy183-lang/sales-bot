@@ -126,7 +126,7 @@ end-to-end test.
 
 ## Implemented vs. designed for extension
 
-### Implemented — working, tested (242 tests, `pytest`)
+### Implemented — working, tested (243 tests, `pytest`)
 
 - FastAPI webhook validating WhatsApp Cloud API payloads (mock-driven locally),
   with Meta's GET verification handshake, optional HMAC signature validation,
@@ -162,6 +162,8 @@ end-to-end test.
   verification-first orchestrator as the text channel. Spoken Hinglish
   normalization covers common budget, BHK, timeline, and locality variants;
   duplicate voice event IDs return the cached reply without replaying actions.
+  A configured secret custom header is checked in constant time before a
+  public voice webhook is processed.
 
 ### Pending credentials (code ready, not yet wired live)
 
@@ -205,7 +207,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env        # fill in your own values; never commit .env
 
-pytest                      # 242 tests
+pytest                      # 243 tests
 python -m evals.run_evals   # evaluation table below
 uvicorn app.main:app --reload
 ```
@@ -215,6 +217,39 @@ dev/demo front door that posts to the same `/webhook` as WhatsApp (orchestrator,
 verification, and CRM untouched). It's the fastest way to walk the full demo,
 including the trap question, without WhatsApp credentials. It is **not** the
 production channel — WhatsApp (Task 0B) is the real transport.
+
+### Wiring the ElevenLabs voice tool
+
+This integration does not use an ElevenLabs API key in the application. In the
+ElevenLabs Agent dashboard, add a **Webhook** tool with the following mapping:
+
+| Setting | Value |
+| --- | --- |
+| URL | `https://sales-bot-rust.vercel.app/voice/elevenlabs/webhook` |
+| Method | `POST` |
+| Response timeout | `20` seconds |
+| Interruptions | Disabled while the tool is running |
+| Secret header | `X-Voice-Webhook-Secret: <same value as ELEVENLABS_WEBHOOK_SECRET>` |
+
+Set the POST body fields as follows. Use the first three dynamic-variable
+templates exactly; `event_id` must include the turn count so a new spoken turn
+is not treated as a retry of the same conversation.
+
+| Field | Value type | Value |
+| --- | --- | --- |
+| `caller_phone_number` | Dynamic variable | `{{system__caller_id}}` |
+| `event_id` | Dynamic variable template | `{{system__conversation_id}}:{{system__agent_turns}}` |
+| `transcript` | LLM prompt | The caller's latest words verbatim. Do not summarize or add facts. |
+| `timestamp` | Dynamic variable | `{{system__time_utc}}` |
+
+Tell the ElevenLabs agent to call this tool after each caller turn and speak
+the returned `reply` value exactly. Keep `ELEVENLABS_WEBHOOK_SECRET` only in
+the ElevenLabs secret header and local/deployment environment variables. Run
+one short test call only after checking the available credit balance.
+
+The mapping uses ElevenLabs'
+[webhook-tool authentication](https://elevenlabs.io/docs/eleven-agents/customization/tools/webhook-tools)
+and [system dynamic variables](https://elevenlabs.io/docs/eleven-agents/customization/personalization/dynamic-variables).
 
 Or simulate a customer message from the shell (no WhatsApp account needed):
 
@@ -340,5 +375,5 @@ app/
 └── actions/           # idempotent CRM + booking + action ledger
 data/properties.json   # the five demo fixtures (no private_pool — deliberate)
 evals/                 # table-driven eval cases + runner
-tests/                 # 242 tests incl. full end-to-end demo scenario
+tests/                 # 243 tests incl. full end-to-end demo scenario
 ```
