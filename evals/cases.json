@@ -73,5 +73,5 @@
   {"category": "routing", "name": "negotiation escalates to large", "message": "I like it but can you do a discount?", "expected_tier": "large"},
   {"category": "routing", "name": "ambiguous escalates to large", "message": "not sure which one is better", "expected_tier": "large"},
   {"category": "routing", "name": "short parse-gap uses small", "message": "something nice please", "expected_tier": "small"},
-  {"category": "routing", "name": "devanagari no-coverage escalates", "message": "मुझे कुछ अच्छा चाहिए", "expected_tier": "large"}
+  {"category": "routing", "name": "hindi intent cue uses small model", "message": "मुझे कुछ अच्छा चाहिए", "expected_tier": "small"}
 ]

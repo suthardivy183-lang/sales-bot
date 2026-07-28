@@ -3,8 +3,8 @@
 Detection is a signal, not a gate: the rule extractor handles romanized
 Hinglish natively, and the LLM extractor (when configured) covers phrasings
 the rules can't. This flag feeds logging today and small-model routing
-(Task 10) later. Devanagari-script extraction without an LLM key is a
-documented limitation, not silently wrong output.
+(Task 10) later. Common Hindi-script BHK, buy, and rent cues are handled by
+the deterministic rules; broader Hindi understanding remains an extension.
 """
 
 import re

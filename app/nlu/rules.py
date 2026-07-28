@@ -73,6 +73,9 @@ _WORD_NUMBERS = {
 _BHK_WORD_RE = re.compile(
     rf"\b({'|'.join(_WORD_NUMBERS)})\s*-?\s*(?:bhk|bed(?:room)?s?)\b", re.IGNORECASE
 )
+_DEVANAGARI_BHK_RE = re.compile(
+    r"\b([1-4])\s*(?:बी\s*एच\s*के|बीएचके)(?=\s|$)"
+)
 
 _SPOKEN_TENS = {
     "twenty": 20,
@@ -143,10 +146,10 @@ LOCALITY_ALIASES = {
     "sarkhej gandhinagar highway": "SG Highway",
 }
 
-_RENT_RE = re.compile(r"\b(?:rent(?:al)?|lease|kiraya|kiraye)\b", re.IGNORECASE)
+_RENT_RE = re.compile(r"\b(?:rent(?:al)?|lease|kiraya|kiraye|किराए)\b", re.IGNORECASE)
 _BUY_RE = re.compile(
     r"\b(?:buy(?:ing)?|purchase|flat|apartment|house|home|property|invest(?:ment)?"
-    r"|chahiye|ghar|makaan|lena|khareed(?:na)?)\b",
+    r"|chahiye|ghar|makaan|lena|khareed(?:na)?|चाहिए|फ्लैट|घर|खरीदना)\b",
     re.IGNORECASE,
 )
 
@@ -228,6 +231,9 @@ def extract_bhk(text: str) -> int | None:
     digit_match = _BHK_DIGIT_RE.search(text)
     if digit_match:
         return int(digit_match.group(1))
+    devanagari_match = _DEVANAGARI_BHK_RE.search(text)
+    if devanagari_match:
+        return int(devanagari_match.group(1))
     word_match = _BHK_WORD_RE.search(text)
     if word_match:
         return _WORD_NUMBERS[word_match.group(1).lower()]

@@ -63,7 +63,7 @@ class TestReadme:
         assert extension_item in README
 
     def test_eval_table_is_present_with_overall_rate(self):
-        assert "| **Overall** | **63** | **64** | **98.4%**" in README
+        assert "| **Overall** | **64** | **64** | **100.0%**" in README
         assert "not a production benchmark" in README
 
     def test_codex_hackathon_positioning_is_documented(self):

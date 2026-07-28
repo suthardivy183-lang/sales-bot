@@ -126,7 +126,7 @@ end-to-end test.
 
 ## Implemented vs. designed for extension
 
-### Implemented — working, tested (244 tests, `pytest`)
+### Implemented — working, tested (247 tests, `pytest`)
 
 - FastAPI webhook validating WhatsApp Cloud API payloads (mock-driven locally),
   with Meta's GET verification handshake, optional HMAC signature validation,
@@ -208,7 +208,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env        # fill in your own values; never commit .env
 
-pytest                      # 244 tests
+pytest                      # 247 tests
 python -m evals.run_evals   # evaluation table below
 uvicorn app.main:app --reload
 ```
@@ -293,11 +293,11 @@ with a single command:
 python -m evals.run_evals
 ```
 
-This is a **small hackathon evaluation set, not a production benchmark**. The
-remaining known-hard case is Devanagari-only script without an LLM key, so the
-rates below are honest, not curated. Every case runs against the real
-production components — no mocks. The same targets are enforced as a CI gate in
-[tests/test_evals.py](tests/test_evals.py).
+This is a **small hackathon evaluation set, not a production benchmark**.
+Every case runs against the real production components — no mocks. The suite
+includes a Hindi-script BHK turn on the deterministic rules-only path; broader
+Hindi understanding remains a documented extension. The same targets are
+enforced as a CI gate in [tests/test_evals.py](tests/test_evals.py).
 
 | Category | Passed | Total | Rate | Target | Status |
 | --- | --- | --- | --- | --- | --- |
@@ -308,12 +308,12 @@ production components — no mocks. The same targets are enforced as a CI gate i
 | unsupported_claim | 6 | 6 | 100.0% | ≥100% | ✅ |
 | price_claim | 4 | 4 | 100.0% | ≥100% | ✅ |
 | emi | 5 | 5 | 100.0% | ≥100% | ✅ |
-| hinglish | 7 | 8 | 87.5% | ≥85% | ✅ |
+| hinglish | 8 | 8 | 100.0% | ≥85% | ✅ |
 | ambiguous | 4 | 4 | 100.0% | ≥100% | ✅ |
 | booking_duplication | 2 | 2 | 100.0% | ≥100% | ✅ |
 | handoff | 3 | 3 | 100.0% | ≥100% | ✅ |
 | routing | 6 | 6 | 100.0% | ≥100% | ✅ |
-| **Overall** | **63** | **64** | **98.4%** | — | — |
+| **Overall** | **64** | **64** | **100.0%** | — | — |
 
 ## Build progress
 
@@ -376,5 +376,5 @@ app/
 └── actions/           # idempotent CRM + booking + action ledger
 data/properties.json   # the five demo fixtures (no private_pool — deliberate)
 evals/                 # table-driven eval cases + runner
-tests/                 # 244 tests incl. full end-to-end demo scenario
+tests/                 # 247 tests incl. full end-to-end demo scenario
 ```

@@ -38,6 +38,7 @@ BHK_CASES = [
     ("a 2-bhk please", 2),
     ("three bhk", 3),
     ("4 bedroom house", 4),
+    ("मुझे 2 बीएचके चाहिए", 2),
     ("2 or 3 bhk", 3),
     ("no bedrooms mentioned", None),
 ]
@@ -67,7 +68,9 @@ INTENT_CASES = [
     ("I want to buy a flat", Intent.BUY),
     ("looking for an apartment", Intent.BUY),
     ("2bhk chahiye", Intent.BUY),  # Hinglish
+    ("मुझे 2 बीएचके चाहिए", Intent.BUY),
     ("flat on rent please", Intent.RENT),
+    ("मुझे 2 बीएचके किराए पर चाहिए", Intent.RENT),
     ("kiraya kitna hai", Intent.RENT),
     ("hello", None),
 ]

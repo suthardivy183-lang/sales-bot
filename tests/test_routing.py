@@ -51,10 +51,10 @@ class TestRoutingDecisions:
         assert decision.tier == RouteTier.SMALL
         assert decision.model == SMALL
 
-    def test_code_switched_without_rule_coverage_escalates(self, router):
-        # Devanagari with no romanized fields the rules can read.
+    def test_code_switched_intent_cue_uses_small_model(self, router):
+        # Hindi purchase intent is parsed, but the rest of the request is open.
         decision = router.decide("मुझे कुछ अच्छा चाहिए")
-        assert decision.tier == RouteTier.LARGE
+        assert decision.tier == RouteTier.SMALL
 
     def test_code_switched_but_parsed_is_not_rules_only(self, router):
         # "2bhk chahiye" parses via rules AND is code-switched -> not free tier.
