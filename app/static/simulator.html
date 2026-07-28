@@ -426,6 +426,9 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload(text)),
         });
+        if (!res.ok) {
+          throw new Error("The demo service returned HTTP " + res.status);
+        }
         const data = await res.json();
         const reply = (data.replies && data.replies[0] && data.replies[0].reply)
           || "(no reply — status: " + (data.status || "unknown") + ")";
@@ -433,7 +436,10 @@
         addBubble("bot", reply, { blocked: isBlocked(reply) });
       } catch (err) {
         typing.remove();
-        addBubble("bot", "⚠︎ Could not reach the server. Is uvicorn running?");
+        addBubble(
+          "bot",
+          "⚠︎ The demo service could not respond. Refresh the page and try that message again."
+        );
       } finally {
         sendBtn.disabled = false;
         input.focus();

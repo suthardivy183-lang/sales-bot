@@ -14,6 +14,9 @@ class TestSimulatorPage:
     def test_page_posts_to_the_real_webhook(self, client):
         body = client.get("/").text
         assert 'fetch("/webhook"' in body
+        assert "res.ok" in body
+        assert "HTTP " in body
+        assert "Is uvicorn running?" not in body
         # It reads the same envelope the webhook returns.
         assert "data.replies" in body
 
