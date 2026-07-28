@@ -27,8 +27,8 @@ class HybridExtractor:
 
 
 def build_extractor(settings: Settings) -> HybridExtractor:
-    if not settings.llm_api_key:
-        return HybridExtractor()  # rules-only; no key configured
+    if not settings.llm_enabled or not settings.llm_api_key:
+        return HybridExtractor()  # rules-only; a stored key never enables calls
 
     if settings.llm_routing_enabled:
         return HybridExtractor(_build_routed_extractor(settings))

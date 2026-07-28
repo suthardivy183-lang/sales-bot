@@ -126,7 +126,7 @@ end-to-end test.
 
 ## Implemented vs. designed for extension
 
-### Implemented — working, tested (243 tests, `pytest`)
+### Implemented — working, tested (244 tests, `pytest`)
 
 - FastAPI webhook validating WhatsApp Cloud API payloads (mock-driven locally),
   with Meta's GET verification handshake, optional HMAC signature validation,
@@ -178,9 +178,10 @@ end-to-end test.
 - **Google Sheets as the live CRM backend**: needs a service-account JSON +
   spreadsheet ID in deployment secrets, a shared spreadsheet, and one
   controlled append test; the backend is implemented and mock-tested.
-- **Gemini LLM pass**: an `LLM_API_KEY` is configured locally, but routing stays
-  disabled until one controlled ambiguous Hinglish test is approved; rules
-  remain authoritative and provider failures fall back to rules-only behavior.
+- **Gemini LLM pass**: an `LLM_API_KEY` is configured locally, but
+  `LLM_ENABLED=false` keeps the application rules-only until one controlled
+  ambiguous Hinglish test is approved. Routing then remains optional; rules
+  stay authoritative and provider failures fall back to rules-only behavior.
 
 ### Designed for extension — documented only, deliberately NOT built
 
@@ -207,7 +208,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env        # fill in your own values; never commit .env
 
-pytest                      # 243 tests
+pytest                      # 244 tests
 python -m evals.run_evals   # evaluation table below
 uvicorn app.main:app --reload
 ```
@@ -375,5 +376,5 @@ app/
 └── actions/           # idempotent CRM + booking + action ledger
 data/properties.json   # the five demo fixtures (no private_pool — deliberate)
 evals/                 # table-driven eval cases + runner
-tests/                 # 243 tests incl. full end-to-end demo scenario
+tests/                 # 244 tests incl. full end-to-end demo scenario
 ```

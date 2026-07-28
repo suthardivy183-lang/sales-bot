@@ -108,18 +108,29 @@ class TestRoutedExtractor:
 
 
 class TestBuildExtractor:
-    def test_routing_disabled_uses_single_model(self):
-        settings = Settings(llm_api_key="k", llm_routing_enabled=False, _env_file=None)
+    def test_key_without_explicit_enable_stays_rules_only(self):
+        settings = Settings(llm_api_key="k", llm_routing_enabled=True, _env_file=None)
+        extractor = build_extractor(settings)
+        assert extractor._llm_extractor is None
+
+    def test_enabled_routing_disabled_uses_single_model(self):
+        settings = Settings(
+            llm_api_key="k", llm_enabled=True, llm_routing_enabled=False, _env_file=None
+        )
         extractor = build_extractor(settings)
         assert isinstance(extractor, HybridExtractor)
         assert not isinstance(extractor._llm_extractor, RoutedLLMExtractor)
 
-    def test_routing_enabled_builds_routed_extractor(self):
-        settings = Settings(llm_api_key="k", llm_routing_enabled=True, _env_file=None)
+    def test_enabled_routing_builds_routed_extractor(self):
+        settings = Settings(
+            llm_api_key="k", llm_enabled=True, llm_routing_enabled=True, _env_file=None
+        )
         extractor = build_extractor(settings)
         assert isinstance(extractor._llm_extractor, RoutedLLMExtractor)
 
     def test_no_key_stays_rules_only_even_with_routing_flag(self):
-        settings = Settings(llm_api_key="", llm_routing_enabled=True, _env_file=None)
+        settings = Settings(
+            llm_api_key="", llm_enabled=True, llm_routing_enabled=True, _env_file=None
+        )
         extractor = build_extractor(settings)
         assert extractor._llm_extractor is None

@@ -36,8 +36,10 @@ class Settings(BaseSettings):
     llm_provider: str = "gemini"
     llm_api_key: str = ""
     llm_model: str = "gemini-2.5-flash"
+    # A key alone must never spend credits; enable only for a controlled live test.
+    llm_enabled: bool = False
 
-    # Small-model cost routing (Task 10, optional; off by default)
+    # Small-model cost routing (Task 10, optional; applies only when enabled)
     llm_routing_enabled: bool = False
     llm_model_small: str = "gemini-2.5-flash-lite"
     llm_model_large: str = "gemini-2.5-flash"
