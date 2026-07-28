@@ -82,8 +82,10 @@ class TestFullAhmedabadScenario:
 
         leads = SqliteCrmBackend(settings.database_path).all_leads()
         notes = [lead.note for lead in leads]
-        assert len(leads) == 3  # match presented, trap handoff, booking — no dupes
+        # Match, EMI interest, trap handoff, booking — no replay duplicates.
+        assert len(leads) == 4
         assert any("presented properties [4]" in note for note in notes)
+        assert any(note.startswith("HIGH_INTENT") for note in notes)
         assert any(note.startswith("HANDOFF") for note in notes)
         assert any("viewing booked: Saturday 11:00" in note for note in notes)
         assert all(lead.wa_id_masked.startswith("*") for lead in leads)
@@ -123,3 +125,43 @@ class TestOrchestratorEdges:
             client, "Hi, I want to buy a flat", "wamid.b", wa_id="918888000022"
         )
         assert "budget" in reply.lower()  # fresh lead starts from scratch
+
+    def test_human_request_creates_an_idempotent_handoff(self, env):
+        client, settings = env
+
+        reply = send(client, "I want to talk to a human agent", "wamid.handoff")
+        replay = send(client, "I want to talk to a human agent", "wamid.handoff")
+
+        assert reply == replay
+        assert "human sales agent" in reply.lower()
+        state = SessionStore(settings.database_path).get(WA_ID)
+        assert state.stage == "handoff"
+        leads = SqliteCrmBackend(settings.database_path).all_leads()
+        assert len(leads) == 1
+        assert leads[0].note == "HANDOFF: caller requested a human sales agent"
+
+    def test_negotiation_is_escalated_without_inventing_a_discount(self, env):
+        client, settings = env
+        send(client, "buying a flat, 3BHK in Bopal, under 90 lakh", "wamid.a")
+
+        reply = send(client, "Can you give me the best price or a discount?", "wamid.b")
+
+        assert "human sales agent" in reply.lower()
+        assert "discount" not in reply.lower()
+        leads = SqliteCrmBackend(settings.database_path).all_leads()
+        assert leads[-1].note == "HANDOFF: caller requested price negotiation"
+        assert leads[-1].property_id == 4
+
+    def test_emi_interest_is_written_once_to_crm(self, env):
+        client, settings = env
+        send(client, "buying a flat, 3BHK in Bopal, under 90 lakh", "wamid.a")
+
+        reply = send(client, "What would the EMI be?", "wamid.emi")
+        replay = send(client, "What would the EMI be?", "wamid.emi")
+
+        assert reply == replay
+        assert "₹59,012/month" in reply
+        leads = SqliteCrmBackend(settings.database_path).all_leads()
+        emi_leads = [lead for lead in leads if lead.note.startswith("HIGH_INTENT")]
+        assert len(emi_leads) == 1
+        assert emi_leads[0].property_id == 4

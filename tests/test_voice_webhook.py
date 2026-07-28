@@ -89,3 +89,15 @@ class TestElevenLabsVoiceWebhook:
 
         assert "2BHK in Bopal" in replies[-1]
         assert "₹65 lakh" in replies[-1]
+
+    def test_difficult_voice_turn_is_handed_to_a_human(self, client):
+        response = client.post(
+            "/voice/elevenlabs/webhook",
+            json=make_elevenlabs_payload(
+                transcript="Can I talk to a human agent?",
+                event_id="voice-human-handoff",
+            ),
+        )
+
+        assert response.status_code == 200
+        assert "human sales agent" in response.json()["reply"].lower()

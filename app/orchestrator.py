@@ -1,10 +1,11 @@
 """Orchestrator Agent — plans and routes each turn using current state.
 
 Routing per turn (first match wins):
-1. booking request  (needs a target property)   -> idempotent booking + CRM
-2. EMI request      (needs a target property)   -> deterministic EMI tool
-3. property question (only once matched)        -> field answer via verifier
-4. everything else                              -> qualification turn
+1. human or negotiation escalation               -> idempotent CRM handoff
+2. booking request  (needs a target property)   -> idempotent booking + CRM
+3. EMI request      (needs a target property)   -> deterministic EMI tool + interest CRM
+4. property question (only once matched)        -> field answer via verifier
+5. everything else                              -> qualification turn
 
 The Verification Agent gates EVERY reply that carries property facts —
 nothing reaches the customer unverified (engineering rule 3).
@@ -21,7 +22,7 @@ from app.agents.response import ResponseGenerator
 from app.agents.verification import VerificationAgent
 from app.gateway.schemas import IncomingMessage
 from app.nlu.hinglish import is_code_switched
-from app.nlu.intents import wants_booking, wants_emi
+from app.nlu.intents import handoff_reason, wants_booking, wants_emi
 from app.nlu.questions import fields_asked_about
 from app.nlu.rules import extract_locality
 from app.privacy import mask_phone
@@ -46,6 +47,10 @@ GENERIC_PROMPT = (
 NO_SLOTS_REPLY = (
     "All viewing slots are currently taken — a human agent will call you "
     "to arrange a time."
+)
+HUMAN_HANDOFF_REPLY = (
+    "I've asked a human sales agent to follow up with you. "
+    "They can help with that request."
 )
 
 _PROFILE_FIELDS = ("intent", "locality", "budget_min", "budget_max", "bhk", "timeline")
@@ -80,10 +85,13 @@ class Orchestrator:
             is_code_switched(message.text),
         )
 
+        reason = handoff_reason(message.text)
+        if reason is not None:
+            return self._handle_handoff(state, message, reason, target)
         if wants_booking(message.text) and target is not None:
             return self._handle_booking(state, message, target)
         if wants_emi(message.text) and target is not None:
-            return self._handle_emi(target)
+            return self._handle_emi(state, message, target)
         fields = fields_asked_about(message.text)
         if fields and target is not None and state.stage in (Stage.MATCHED, Stage.BOOKED):
             return self._handle_field_question(state, message, target, fields)
@@ -155,10 +163,35 @@ class Orchestrator:
         )
         return verified.text
 
-    def _handle_emi(self, target: Property) -> str:
+    def _handle_emi(
+        self, state: SessionState, message: IncomingMessage, target: Property
+    ) -> str:
         quote = quote_for_property_price(target.price)
         verified = self._verifier.verify(self._generator.emi_reply(target, quote))
+        self._crm.write_lead(
+            message.message_id,
+            state,
+            note="HIGH_INTENT: requested EMI estimate",
+            property_id=target.id,
+        )
         return verified.text
+
+    def _handle_handoff(
+        self,
+        state: SessionState,
+        message: IncomingMessage,
+        reason: str,
+        target: Property | None,
+    ) -> str:
+        handoff_state = state.model_copy(update={"stage": Stage.HANDOFF})
+        self._store.save(handoff_state)
+        self._crm.write_lead(
+            message.message_id,
+            handoff_state,
+            note=f"HANDOFF: {reason}",
+            property_id=target.id if target is not None else None,
+        )
+        return HUMAN_HANDOFF_REPLY
 
     def _handle_field_question(
         self,

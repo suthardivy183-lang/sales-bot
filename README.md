@@ -126,7 +126,7 @@ end-to-end test.
 
 ## Implemented vs. designed for extension
 
-### Implemented — working, tested (238 tests, `pytest`)
+### Implemented — working, tested (242 tests, `pytest`)
 
 - FastAPI webhook validating WhatsApp Cloud API payloads (mock-driven locally),
   with Meta's GET verification handshake, optional HMAC signature validation,
@@ -146,6 +146,9 @@ end-to-end test.
   incomplete configuration.
 - Orchestrator wiring the full flow; the complete Ahmedabad demo scenario runs
   as one automated test, including a webhook replay that changes nothing.
+- Deterministic sales escalation: explicit human-agent and price-negotiation
+  requests create a replay-safe CRM handoff rather than inventing a discount;
+  an EMI request records verified high intent while returning calculator output.
 - Hinglish: code-switch detection + native rule coverage ("70 lakh tak",
   "3 kamre", "ghar lena hai", "turant"), proven by a full Hinglish
   conversation reaching a verified match.
@@ -173,7 +176,9 @@ end-to-end test.
 - **Google Sheets as the live CRM backend**: needs a service-account JSON +
   spreadsheet ID in deployment secrets, a shared spreadsheet, and one
   controlled append test; the backend is implemented and mock-tested.
-- **Gemini LLM pass**: needs `LLM_API_KEY`; everything runs rules-only today.
+- **Gemini LLM pass**: an `LLM_API_KEY` is configured locally, but routing stays
+  disabled until one controlled ambiguous Hinglish test is approved; rules
+  remain authoritative and provider failures fall back to rules-only behavior.
 
 ### Designed for extension — documented only, deliberately NOT built
 
@@ -200,7 +205,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env        # fill in your own values; never commit .env
 
-pytest                      # 238 tests
+pytest                      # 242 tests
 python -m evals.run_evals   # evaluation table below
 uvicorn app.main:app --reload
 ```
@@ -238,9 +243,10 @@ curl -s -X POST localhost:8000/webhook -H 'Content-Type: application/json' -d '{
 1. Create a Google Cloud service account with the Sheets API enabled; download
    its JSON key **outside the repo**.
 2. Share the target spreadsheet with the service-account email.
-3. Set `GOOGLE_SHEETS_CREDENTIALS_FILE` and `GOOGLE_SHEETS_SPREADSHEET_ID` in
-   `.env`; swap `SheetsCrmBackend` in at the composition root
-   ([app/deps.py](app/deps.py)).
+3. Set `GOOGLE_SHEETS_SERVICE_ACCOUNT_JSON` and
+   `GOOGLE_SHEETS_SPREADSHEET_ID` in `.env`. The composition root in
+   [app/deps.py](app/deps.py) automatically chooses `SheetsCrmBackend` only
+   when both are valid; SQLite remains the safe default.
 
 ## Evaluation results
 
@@ -334,5 +340,5 @@ app/
 └── actions/           # idempotent CRM + booking + action ledger
 data/properties.json   # the five demo fixtures (no private_pool — deliberate)
 evals/                 # table-driven eval cases + runner
-tests/                 # 238 tests incl. full end-to-end demo scenario
+tests/                 # 242 tests incl. full end-to-end demo scenario
 ```
