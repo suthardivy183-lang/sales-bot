@@ -51,7 +51,7 @@ evidence trail for every factual property response.
 
 ## Evidence of quality
 
-- 247 automated tests
+- 248 automated tests
 - 64-case hackathon evaluation set: 64/64 passed (100.0%)
 - 100% on the evaluation sets for unsupported-claim blocking, price-claim
   correction, EMI, booking duplication, and human handoff

@@ -44,6 +44,29 @@ class TestElevenLabsVoiceWebhook:
         assert second.status_code == 200
         assert "area" in second.json()["reply"].lower()
 
+    def test_browser_preview_without_a_phone_number_keeps_turn_state(self, client):
+        first = client.post(
+            "/voice/elevenlabs/webhook",
+            json=make_elevenlabs_payload(
+                caller_phone_number="",
+                event_id="preview-conversation-7:1",
+                transcript="I want a flat in Ahmedabad",
+            ),
+        )
+        second = client.post(
+            "/voice/elevenlabs/webhook",
+            json=make_elevenlabs_payload(
+                caller_phone_number="",
+                event_id="preview-conversation-7:2",
+                transcript="Under 70 lakh",
+            ),
+        )
+
+        assert first.status_code == 200
+        assert "budget" in first.json()["reply"].lower()
+        assert second.status_code == 200
+        assert "area" in second.json()["reply"].lower()
+
     def test_replayed_voice_event_returns_cached_reply_without_double_booking(self, client):
         caller_phone_number = "919999000011"
         for event_id, transcript in (

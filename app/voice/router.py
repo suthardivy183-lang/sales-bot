@@ -20,7 +20,8 @@ VOICE_WEBHOOK_SECRET_HEADER = "X-Voice-Webhook-Secret"
 class ElevenLabsVoicePayload(BaseModel):
     """Normalized transcript event forwarded by the ElevenLabs agent tool."""
 
-    caller_phone_number: str = Field(min_length=1)
+    # Browser Preview has no telephony caller id; live phone calls do.
+    caller_phone_number: str = ""
     event_id: str = Field(min_length=1)
     transcript: str = Field(min_length=1)
     timestamp: str = Field(min_length=1)
@@ -48,7 +49,7 @@ def receive_voice_webhook(
         return {"reply": replayed["reply"]}
 
     message = IncomingMessage(
-        wa_id=payload.caller_phone_number,
+        wa_id=_session_key(payload),
         message_id=payload.event_id,
         text=payload.transcript,
         timestamp=payload.timestamp,
@@ -57,3 +58,12 @@ def receive_voice_webhook(
     reply = request.app.state.orchestrator.handle_message(message)
     reply_ledger.record(payload.event_id, VOICE_REPLY_ACTION, {"reply": reply})
     return {"reply": reply}
+
+
+def _session_key(payload: ElevenLabsVoicePayload) -> str:
+    """Use the phone number for real calls and a stable key for browser Preview."""
+    caller_phone_number = payload.caller_phone_number.strip()
+    if caller_phone_number:
+        return caller_phone_number
+    conversation_id, _, _ = payload.event_id.rpartition(":")
+    return f"elevenlabs-preview:{conversation_id or payload.event_id}"

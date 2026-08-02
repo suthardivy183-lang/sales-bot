@@ -126,7 +126,7 @@ end-to-end test.
 
 ## Implemented vs. designed for extension
 
-### Implemented — working, tested (247 tests, `pytest`)
+### Implemented — working, tested (248 tests, `pytest`)
 
 - FastAPI webhook validating WhatsApp Cloud API payloads (mock-driven locally),
   with Meta's GET verification handshake, optional HMAC signature validation,
@@ -171,10 +171,10 @@ end-to-end test.
   signature validation, and reply replay protection are implemented; it needs
   a test number, credentials, callback configuration, and one controlled live
   round trip.
-- **ElevenLabs dashboard tool mapping + live voice check**: the agent is
-  configured, but its webhook tool still needs the final dynamic-variable
-  mapping and one controlled call test. No audio credits were used during
-  configuration.
+- **ElevenLabs live voice check**: the dashboard tool mapping is configured;
+  one controlled browser Preview call must be repeated after the latest public
+  deployment. Browser Preview has no phone number, so its session safely falls
+  back to the ElevenLabs conversation id.
 - **Google Sheets as the live CRM backend**: needs a service-account JSON +
   spreadsheet ID in deployment secrets, a shared spreadsheet, and one
   controlled append test; the backend is implemented and mock-tested.
@@ -192,7 +192,6 @@ end-to-end test.
 - Standalone analytics dashboard
 - LLM judgment pass for free-text soft claims ("great for families")
 - Embedding-based semantic reranker (slots in behind the same search signature)
-- Devanagari-script extraction (detection works; extraction needs the LLM key)
 
 Dev/demo tooling (not the product, clearly labeled):
 
@@ -208,7 +207,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env        # fill in your own values; never commit .env
 
-pytest                      # 247 tests
+pytest                      # 248 tests
 python -m evals.run_evals   # evaluation table below
 uvicorn app.main:app --reload
 ```
@@ -247,6 +246,10 @@ Tell the ElevenLabs agent to call this tool after each caller turn and speak
 the returned `reply` value exactly. Keep `ELEVENLABS_WEBHOOK_SECRET` only in
 the ElevenLabs secret header and local/deployment environment variables. Run
 one short test call only after checking the available credit balance.
+
+For browser Preview, `system__caller_id` is empty. That is supported: the
+server uses the conversation part of `event_id` as a stable preview-only
+session key. Phone calls continue to use the real caller number.
 
 The mapping uses ElevenLabs'
 [webhook-tool authentication](https://elevenlabs.io/docs/eleven-agents/customization/tools/webhook-tools)
@@ -376,5 +379,5 @@ app/
 └── actions/           # idempotent CRM + booking + action ledger
 data/properties.json   # the five demo fixtures (no private_pool — deliberate)
 evals/                 # table-driven eval cases + runner
-tests/                 # 247 tests incl. full end-to-end demo scenario
+tests/                 # 248 tests incl. full end-to-end demo scenario
 ```
